@@ -1,8 +1,7 @@
 using CSharpFunctionalExtensions;
-using MediatR;
 using Primitives;
 
-namespace StoragePlace;
+namespace DeliveryApp.Core.Domain.Model.CourierAggregate;
 
 public class StoragePlace : Entity<Guid>
 {
@@ -23,14 +22,16 @@ public class StoragePlace : Entity<Guid>
 
     public static Result<StoragePlace, Error> Create(string name, int volume)
     {
-        if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException(nameof(name));
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(volume);
+        if (string.IsNullOrWhiteSpace(name)) return GeneralErrors.ValueIsInvalid("Provie correct name of a storage");
+        if (volume <= 0) return GeneralErrors.ValueIsInvalid("Volume must be greater than 0");
 
         return new StoragePlace(name, volume);
     }
 
     public Result<bool, Error> CanStore(int volume)
     {
+        if (volume <= 0) return GeneralErrors.ValueIsInvalid("Provide volume greater than 0");
+
         return (TotalVolume >= volume);
     }
 
@@ -52,4 +53,5 @@ public class StoragePlace : Entity<Guid>
     }
 
     private bool IsOccupied() => OrderId.HasValue;
+
 }
