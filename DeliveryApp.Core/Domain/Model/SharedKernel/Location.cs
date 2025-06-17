@@ -1,6 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
 using CSharpFunctionalExtensions;
-using Primitives;
 
 namespace DeliveryApp.Core.Domain.Model.SharedKernel;
 
@@ -13,12 +12,12 @@ public class Location : ValueObject
     /// <summary>
     /// Координата по оси X (от 1 до 10).
     /// </summary>
-    public int X { get; private set; }
+    public int X { get; }
 
     /// <summary>
     /// Координата по оси Y (от 1 до 10).
     /// </summary>
-    public int Y { get; private set; }
+    public int Y { get; }
 
     [ExcludeFromCodeCoverage]
     private Location()
@@ -27,20 +26,20 @@ public class Location : ValueObject
     /// <summary>
     /// Создаёт экземпляр <see cref="Location"/> с валидацией координат.
     /// </summary>
-    /// <param name="x_value">Координата X, должна быть от 1 до 10.</param>
-    /// <param name="y_value">Координата Y, должна быть от 1 до 10.</param>
+    /// <param name="x">Координата X, должна быть от 1 до 10.</param>
+    /// <param name="y">Координата Y, должна быть от 1 до 10.</param>
     /// <exception cref="ArgumentOutOfRangeException">
     /// Выбрасывается, если любая из координат вне диапазона 1..10.
     /// </exception>
-    public Location(int x_value, int y_value)
+    public Location(int x, int y)
     {
-        if (x_value < 1 || x_value > 10)
-            throw new ArgumentOutOfRangeException(nameof(x_value), "Value must be within 1..10");
-        if (y_value < 1 || y_value > 10)
-            throw new ArgumentOutOfRangeException(nameof(y_value), "Value must be within 1..10");
+        if (x < 1 || x > 10)
+            throw new ArgumentOutOfRangeException(nameof(x));
+        if (y < 1 || y > 10)
+            throw new ArgumentOutOfRangeException(nameof(y));
 
-        X = x_value;
-        Y = y_value;
+        X = x;
+        Y = y;
     }
 
     /// <summary>
@@ -53,12 +52,10 @@ public class Location : ValueObject
     /// </exception>
     public int DistanceTo(Location other)
     {
-        if (other is null)
+        if (other == null)
             throw new ArgumentNullException(nameof(other));
 
-        int dx = X - other.X;
-        int dy = Y - other.Y;
-        return Math.Abs(dx) + Math.Abs(dy);
+        return Math.Abs(X - other.X) + Math.Abs(Y - other.Y);
     }
 
     /// <summary>
@@ -67,9 +64,8 @@ public class Location : ValueObject
     /// <returns>Новый экземпляр <see cref="Location"/> со случайными координатами.</returns>
     public static Location CreateRandom()
     {
-        int x = Random.Shared.Next(1, 11);
-        int y = Random.Shared.Next(1, 11);
-        return new Location(x, y);
+        var random = new Random();
+        return new Location(random.Next(1, 11), random.Next(1, 11));
     }
 
     [ExcludeFromCodeCoverage]
