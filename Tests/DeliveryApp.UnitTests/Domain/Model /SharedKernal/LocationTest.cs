@@ -8,10 +8,10 @@ namespace DeliveryApp.UnitTests.Domain.Model.SharedKernel;
 public class LocationShould
 {
     [Theory]
-    [InlineData(0, 5, "x_value")]
-    [InlineData(11, 5, "x_value")]
-    [InlineData(5, 0, "y_value")]
-    [InlineData(5, 11, "y_value")]
+    [InlineData(0, 5, "x")]
+    [InlineData(11, 5, "x")]
+    [InlineData(5, 0, "y")]
+    [InlineData(5, 11, "y")]
     public void ThrowExecptionWhenParamsAreNotCorrectOnCreated(int x, int y, string expectedParamName)
     {
         // Arrange 
