@@ -95,4 +95,21 @@ public class CourierAggregateShall
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().NotBeNull();
     }
+
+    [Fact]
+    public void CannotStoreWhenIsOccupied()
+    {
+        // Arrange
+        var storagePlaceResult = StoragePlace.Create("bag", 5);
+        storagePlaceResult.Value.Store(Guid.NewGuid(), 3);
+        
+        var storagePlace = storagePlaceResult.Value;
+
+        // Act
+        var result = storagePlace.CanStore(1);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeFalse();
+    }
 }
