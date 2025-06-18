@@ -5,7 +5,7 @@ using Xunit;
 
 namespace DeliveryApp.UnitTests.Domain.Model.CourierAggregate;
 
-public class CourierAggregateShall
+public class StoragePlaceShall
 {
     [Theory]
     [InlineData("bag", 10)]
