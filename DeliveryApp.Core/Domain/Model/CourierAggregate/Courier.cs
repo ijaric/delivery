@@ -27,8 +27,10 @@ public class Courier : Aggregate<Guid>
         if (string.IsNullOrEmpty(name)) return GeneralErrors.ValueIsRequired("Name");
         if (speed <= 0) return GeneralErrors.ValueIsInvalid("Speed must be greater than 0");
 
-        var defaultStorage = StoragePlace.Create("Сумка", 10).Value;
-        return new Courier(name, speed, location, defaultStorage);
+        var defaultStorageResult = StoragePlace.Create("Сумка", 10);
+        if (defaultStorageResult.IsFailure) return defaultStorageResult.Error;
+        
+        return new Courier(name, speed, location, defaultStorageResult.Value);
     }
 
     public UnitResult<Error> AddStoragePlace(string name, int volume)
@@ -52,26 +54,28 @@ public class Courier : Aggregate<Guid>
     {
         if (order == null) return GeneralErrors.ValueIsRequired("Order");
 
-        var canTakeOrderResult = CanTakeOrder(order);
-        if (canTakeOrderResult.IsFailure || canTakeOrderResult.Value == false)
-            return GeneralErrors.ValueIsInvalid("This courier doesn't have enough storage");
+        var storageToUse = StoragePlaces.FirstOrDefault(s => s.CanStore(order.Volume).Value);
+        if (storageToUse == null) return GeneralErrors.ValueIsInvalid("No available storage place for this order");
 
         // Assign order to courier
-        order.Assign(this);
-        // Store order in storage place
-        StoragePlaces.First(s => s.CanStore(order.Volume).Value).Store(order.Id, order.Volume);
+        var assignResult = order.Assign(this);
+        if (assignResult.IsFailure) return assignResult.Error;
 
-        return UnitResult.Success<Error>();
+        // Store order in storage place
+        return storageToUse.Store(order.Id, order.Volume);
     }
 
     public UnitResult<Error> CompleteOrder(Order order)
     {
         if (order == null) return GeneralErrors.ValueIsRequired("Order");
 
+        var storage = StoragePlaces.FirstOrDefault(s => s.OrderId == order.Id);
+        if (storage == null) return GeneralErrors.InternalServerError($"Could not find storage for order {order.Id}");
         order.Complete();
-        StoragePlaces.First(s => s.OrderId == order.Id).Clear(order.Id);
-        return UnitResult.Success<Error>();
+        
+        return storage.Clear(order.Id);
     }
+
 
     public Result<double, Error> CalculateTimeToLocation(Location location)
     {
@@ -81,7 +85,7 @@ public class Courier : Aggregate<Guid>
 
     public UnitResult<Error> Move(Location target)
     {
-        if (Location == target) return GeneralErrors.ValueIsInvalid("Couirer already at target");
+        if (Location == target) return GeneralErrors.ValueIsInvalid("Courier already at target");
 
         Location = target;
         return UnitResult.Success<Error>();
