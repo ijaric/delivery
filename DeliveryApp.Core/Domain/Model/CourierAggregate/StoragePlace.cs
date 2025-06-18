@@ -22,7 +22,7 @@ public class StoragePlace : Entity<Guid>
 
     public static Result<StoragePlace, Error> Create(string name, int volume)
     {
-        if (string.IsNullOrWhiteSpace(name)) return GeneralErrors.ValueIsInvalid("Provie correct name of a storage");
+        if (string.IsNullOrWhiteSpace(name)) return GeneralErrors.ValueIsInvalid("Provide correct name of a storage");
         if (volume <= 0) return GeneralErrors.ValueIsInvalid("Volume must be greater than 0");
 
         return new StoragePlace(name, volume);
@@ -32,13 +32,15 @@ public class StoragePlace : Entity<Guid>
     {
         if (volume <= 0) return GeneralErrors.ValueIsInvalid("Provide volume greater than 0");
 
+        if (IsOccupied()) return false;
+
         return (TotalVolume >= volume);
     }
 
     public UnitResult<Error> Store(Guid orderId, int volume)
     {
-        if (volume > TotalVolume) GeneralErrors.ValueIsInvalid("Order volume exceed storage volume");
-        if (IsOccupied()) GeneralErrors.ValueIsInvalid("Storage is occupied");
+        if (volume > TotalVolume) return GeneralErrors.ValueIsInvalid("Order volume exceed storage volume");
+        if (IsOccupied()) return GeneralErrors.ValueIsInvalid("Storage is occupied");
 
         OrderId = orderId;
         return UnitResult.Success<Error>();
@@ -46,7 +48,7 @@ public class StoragePlace : Entity<Guid>
 
     public UnitResult<Error> Clear(Guid orderId)
     {
-        if (OrderId != orderId) GeneralErrors.ValueIsInvalid("This order is not in storage");
+        if (OrderId != orderId) return GeneralErrors.ValueIsInvalid("This order is not in storage");
 
         OrderId = null;
         return UnitResult.Success<Error>();
