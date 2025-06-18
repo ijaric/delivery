@@ -23,6 +23,8 @@ public class Order : Aggregate<Guid>
 
     public static Result<Order, Error> Create(Guid orderId, Location location, int volume)
     {
+        if (orderId == Guid.Empty) return GeneralErrors.ValueIsInvalid("Id is empty");
+        if (location == null) return GeneralErrors.ValueIsInvalid("Location is null");
         if (volume <= 0) return GeneralErrors.ValueIsInvalid("Volume must be greater than 0");
 
         var order = new Order(orderId, location, volume);
