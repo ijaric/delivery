@@ -10,7 +10,7 @@ public class Order : Aggregate<Guid>
     public Location Location { get; }
     public int Volume { get; }
     public OrderStatus Status { get; private set; }
-    public Guid? Courierld { get; private set; }
+    public Guid? CourierId { get; private set; }
 
     private Order() { }
 
@@ -32,10 +32,10 @@ public class Order : Aggregate<Guid>
 
     public UnitResult<Error> Assign(Courier courier)
     {
-        if (Courierld != null) return GeneralErrors.ValueIsInvalid("Order has Courier");
+        if (CourierId != null) return GeneralErrors.ValueIsInvalid("Order has Courier");
         if (Status != OrderStatus.Created) return GeneralErrors.ValueIsInvalid("Order must be in created state to be assigned");
 
-        Courierld = courier.Id;
+        CourierId = courier.Id;
         Status = OrderStatus.Assigned;
         return UnitResult.Success<Error>();
     }
