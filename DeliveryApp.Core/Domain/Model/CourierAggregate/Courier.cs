@@ -24,7 +24,7 @@ public class Courier : Aggregate<Guid>
 
     public static Result<Courier, Error> Create(string name, int speed, Location location)
     {
-        if (string.IsNullOrEmpty(name)) return GeneralErrors.ValueIsRequired("Name");
+        if (string.IsNullOrWhiteSpace(name)) return GeneralErrors.ValueIsRequired("Name");
         if (speed <= 0) return GeneralErrors.ValueIsInvalid("Speed must be greater than 0");
 
         var defaultStorageResult = StoragePlace.Create("Сумка", 10);
