@@ -87,7 +87,25 @@ public class Courier : Aggregate<Guid>
     {
         if (Location == target) return GeneralErrors.ValueIsInvalid("Courier already at target");
 
-        Location = target;
+        var stepsLeft = Speed;
+
+        // Move one cell at a time until limit is reached or target is reached
+        while (stepsLeft-- > 0 && Location != target)
+        {
+            var dx = target.X - Location.X;
+            var dy = target.Y - Location.Y;
+
+            // Move along the axis with the greater distance first
+            if (Math.Abs(dx) >= Math.Abs(dy) && dx != 0)
+            {
+                Location = new Location(Location.X + Math.Sign(dx), Location.Y);
+            }
+            else if (dy != 0)
+            {
+                Location = new Location(Location.X, Location.Y + Math.Sign(dy));
+            }
+        }
+
         return UnitResult.Success<Error>();
     }
 }
