@@ -9,26 +9,38 @@ public class DispatchService : IDispatchService
 {
     public Result<Courier, Error> Dispatch(Order order, Courier[] couriers)
     {
-        // Validate input
-        if (order.Status != OrderStatus.Created) return GeneralErrors.ValueIsInvalid("Provide Order in Created status.");
-        if (couriers.Length <= 0) return GeneralErrors.ValueIsRequired("Provide one or more available couriers.");
+        // Validate input parameters
+        if (order == null) return GeneralErrors.ValueIsRequired("Order");
+        if (couriers == null) return GeneralErrors.ValueIsRequired("Couriers");
+        if (couriers.Length <= 0) return GeneralErrors.ValueIsRequired("Provide one or more available couriers");
+        if (order.Status != OGrderStatus.Created) return GeneralErrors.ValueIsInvalid("Provide Order in Created status");
 
-        // Find the best courier (if any)
-        Courier bestCourier = couriers.FirstOrDefault(c => c.CanTakeOrder(order).Value is true);
-        if (bestCourier == null) return GeneralErrors.ValueIsInvalid("No courier available with sufficient space.");
-
+        Courier bestCourier = null;
         double bestTime = double.PositiveInfinity;
+
+        // Find the courier that can take the order with the shortest delivery time
         foreach (var courier in couriers)
         {
-
-            if (courier.CanTakeOrder(order).Value is true && courier.CalculateTimeToLocation(order.Location).Value < bestTime)
+            var canTakeOrderResult = courier.CanTakeOrder(order);
+            if (canTakeOrderResult.IsFailure) continue; // Skip courier if it can't take the order
+            
+            if (!canTakeOrderResult.Value) continue; // Skip if courier can't take the order
+            
+            var timeResult = courier.CalculateTimeToLocation(order.Location);
+            if (timeResult.IsFailure) continue; // Skip courier if time calculation fails
+            
+            if (timeResult.Value < bestTime)
             {
                 bestCourier = courier;
-                bestTime = courier.CalculateTimeToLocation(order.Location).Value;
+                bestTime = timeResult.Value;
             }
         }
-        
-        // Assign an order to the best courier           
+
+        // Check if we found any eligible courier
+        if (bestCourier == null) 
+            return GeneralErrors.ValueIsInvalid("No courier available with sufficient space");
+
+        // Assign the order to the best courier
         var takeOrderResult = bestCourier.TakeOrder(order);
         if (takeOrderResult.IsFailure) return takeOrderResult.Error;
 
