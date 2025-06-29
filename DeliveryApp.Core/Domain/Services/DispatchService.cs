@@ -22,9 +22,7 @@ public class DispatchService : IDispatchService
         foreach (var courier in couriers)
         {
             var canTakeOrderResult = courier.CanTakeOrder(order);
-            if (canTakeOrderResult.IsFailure) continue; // Skip courier if it can't take the order
-            
-            if (!canTakeOrderResult.Value) continue; // Skip if courier can't take the order
+            if (canTakeOrderResult.IsFailure) continue; // Skip courier if it can't take the order        
             
             var timeResult = courier.CalculateTimeToLocation(order.Location);
             if (timeResult.IsFailure) continue; // Skip courier if time calculation fails
