@@ -13,7 +13,7 @@ public class DispatchService : IDispatchService
         if (order == null) return GeneralErrors.ValueIsRequired("Order");
         if (couriers == null) return GeneralErrors.ValueIsRequired("Couriers");
         if (couriers.Length <= 0) return GeneralErrors.ValueIsRequired("Provide one or more available couriers");
-        if (order.Status != OGrderStatus.Created) return GeneralErrors.ValueIsInvalid("Provide Order in Created status");
+        if (order.Status != OrderStatus.Created) return GeneralErrors.ValueIsInvalid("Provide Order in Created status");
 
         Courier bestCourier = null;
         double bestTime = double.PositiveInfinity;
