@@ -1,9 +1,13 @@
 using DeliveryApp.Api;
+using DeliveryApp.Core.Domain.Services.DispatchService;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Health Checks
 builder.Services.AddHealthChecks();
+
+// Domain Services
+builder.Services.AddSingleton<IDispatchService, DispatchService>();
 
 // Cors
 builder.Services.AddCors(options =>
