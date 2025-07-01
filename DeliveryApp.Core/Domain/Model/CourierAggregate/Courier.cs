@@ -40,14 +40,14 @@ public class Courier : Aggregate<Guid>
         return UnitResult.Success<Error>();
     }
 
-    public Result<bool, Error> CanTakeOrder(Order order)
+    public UnitResult<Error> CanTakeOrder(Order order)
     {
         if (order == null) return GeneralErrors.ValueIsRequired("Order");
 
         var hasEnoughSpace = StoragePlaces.Any(s => s.CanStore(order.Volume).Value);
         if (!hasEnoughSpace) return GeneralErrors.ValueIsInvalid("No storage place has enough volume for this order");
 
-        return true;
+        return UnitResult.Success<Error>();
     }
 
     public UnitResult<Error> TakeOrder(Order order)
