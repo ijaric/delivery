@@ -39,5 +39,10 @@ internal class OrderEntityTypeConfiguration : IEntityTypeConfiguration<Order>
                 l.WithOwner();
             });
         entityTypeBuilder.Navigation(entity => entity.Location).IsRequired();
+
+        entityTypeBuilder
+            .Property(entity => entity.Volume)
+            .HasColumnName("volume")
+            .IsRequired();
     }
 }

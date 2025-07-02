@@ -36,5 +36,11 @@ internal class CourierEntityTypeConfiguration : IEntityTypeConfiguration<Courier
                 l.WithOwner();
             });
         entityTypeBuilder.Navigation(entity => entity.Location).IsRequired();
+
+        entityTypeBuilder
+            .HasMany(c => c.StoragePlaces)
+            .WithOne()
+            .HasForeignKey("CourierId")
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }
