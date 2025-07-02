@@ -30,11 +30,11 @@ public class OrderRepository : IOrderRepository
 
     public async Task<Order> GetAnyCreated()
     {
-        return await _dbContext.Orders.Where(o => o.Status == OrderStatus.Created).FirstAsync();
+        return await _dbContext.Orders.Where(o => o.Status.Name == OrderStatus.Created.Name).FirstAsync();
     }
 
     public async Task<Order[]> GetByStatus(OrderStatus status)
     {
-        return await _dbContext.Orders.Where(o => o.Status == status).ToArrayAsync();
+        return await _dbContext.Orders.Where(o => o.Status.Name == status.Name).ToArrayAsync();
     }
 }
