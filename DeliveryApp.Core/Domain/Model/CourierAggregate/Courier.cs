@@ -14,8 +14,9 @@ public class Courier : Aggregate<Guid>
 
     private Courier() { }
 
-    private Courier(string name, int speed, Location location, StoragePlace storagePlace)
+    private Courier(string name, int speed, Location location, StoragePlace storagePlace) : this()
     {
+        Id = Guid.NewGuid();
         Name = name;
         Speed = speed;
         Location = location;

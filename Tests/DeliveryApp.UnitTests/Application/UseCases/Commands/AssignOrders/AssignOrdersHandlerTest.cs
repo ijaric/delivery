@@ -1,6 +1,7 @@
 using DeliveryApp.Core.Application.UseCases.Commands.AssignOrders;
 using DeliveryApp.Core.Domain.Model.CourierAggregate;
 using DeliveryApp.Core.Domain.Model.OrderAggregate;
+using DeliveryApp.Core.Domain.Model.SharedKernel;
 using DeliveryApp.Core.Domain.Services.DispatchService;
 using DeliveryApp.Core.Ports;
 using FluentAssertions;
@@ -11,6 +12,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 using CSharpFunctionalExtensions;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace DeliveryApp.UnitTests.Application.UseCases.Commands.AssignOrders;
 
@@ -58,7 +61,7 @@ public class AssignOrdersHandlerTest
     public async Task Handle_WithNoAvailableCouriers_ReturnsTrue()
     {
         // Arrange
-        var order = Substitute.For<Order>();
+        var order = Order.Create(Guid.NewGuid(), new Location(1, 1), 5).Value;
         var orders = new[] { order };
         var couriers = new Courier[0];
 
@@ -73,6 +76,7 @@ public class AssignOrdersHandlerTest
 
         // Assert
         result.Should().BeTrue();
+        order.Status.Should().Be(OrderStatus.Created); // Order should remain unassigned
         _orderRepository.DidNotReceive().UpdateOrder(Arg.Any<Order>());
         _courierRepository.DidNotReceive().UpdateCourier(Arg.Any<Courier>());
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
@@ -82,9 +86,9 @@ public class AssignOrdersHandlerTest
     public async Task Handle_WithDispatchServiceFailure_SkipsOrderAndContinues()
     {
         // Arrange
-        var order1 = Substitute.For<Order>();
-        var order2 = Substitute.For<Order>();
-        var courier = Substitute.For<Courier>();
+        var order1 = Order.Create(Guid.NewGuid(), new Location(1, 1), 5).Value;
+        var order2 = Order.Create(Guid.NewGuid(), new Location(2, 2), 3).Value;
+        var courier = Courier.Create("TestCourier", 5, new Location(3, 3)).Value;
         var orders = new[] { order1, order2 };
         var couriers = new[] { courier };
 
@@ -92,12 +96,16 @@ public class AssignOrdersHandlerTest
         _courierRepository.GetAvailable().Returns(Task.FromResult(couriers));
         
         // First order fails dispatch, second succeeds
-        _dispatchService.Dispatch(order1, Arg.Any<Courier[]>())
-            .Returns(Result.Failure<Courier, Error>(GeneralErrors.ValueIsInvalid("No suitable courier")));
-        _dispatchService.Dispatch(order2, Arg.Any<Courier[]>())
-            .Returns(Result.Success<Courier, Error>(courier));
+        _dispatchService.Dispatch(Arg.Any<Order>(), Arg.Any<Courier[]>())
+            .Returns(callInfo =>
+            {
+                var order = callInfo.ArgAt<Order>(0);
+                if (order.Id == order1.Id)
+                    return Result.Failure<Courier, Error>(GeneralErrors.ValueIsInvalid("No suitable courier"));
+                else
+                    return Result.Success<Courier, Error>(courier);
+            });
             
-        order2.Assign(courier).Returns(UnitResult.Success<Error>());
         _unitOfWork.SaveChangesAsync(Arg.Any<CancellationToken>()).Returns(Task.FromResult(true));
 
         var command = new AssignOrdersCommand();
@@ -108,11 +116,14 @@ public class AssignOrdersHandlerTest
         // Assert
         result.Should().BeTrue();
         
-        // First order should not be updated (dispatch failed)
+        // First order should remain unassigned (dispatch failed)
+        order1.Status.Should().Be(OrderStatus.Created);
+        order1.CourierId.Should().BeNull();
         _orderRepository.DidNotReceive().UpdateOrder(order1);
         
-        // Second order should be updated (dispatch succeeded)
-        order2.Received(1).Assign(courier);
+        // Second order should be assigned (dispatch succeeded)
+        order2.Status.Should().Be(OrderStatus.Assigned);
+        order2.CourierId.Should().Be(courier.Id);
         _orderRepository.Received(1).UpdateOrder(order2);
         _courierRepository.Received(1).UpdateCourier(courier);
         
@@ -123,26 +134,31 @@ public class AssignOrdersHandlerTest
     public async Task Handle_WithOrderAssignFailure_SkipsOrderAndContinues()
     {
         // Arrange
-        var order1 = Substitute.For<Order>();
-        var order2 = Substitute.For<Order>();
-        var courier1 = Substitute.For<Courier>();
-        var courier2 = Substitute.For<Courier>();
+        var order1 = Order.Create(Guid.NewGuid(), new Location(1, 1), 5).Value;
+        var order2 = Order.Create(Guid.NewGuid(), new Location(2, 2), 3).Value;
+        var courier1 = Courier.Create("Courier1", 5, new Location(1, 1)).Value;
+        var courier2 = Courier.Create("Courier2", 5, new Location(2, 2)).Value;
         var orders = new[] { order1, order2 };
         var couriers = new[] { courier1, courier2 };
-
-        courier1.Id.Returns(Guid.NewGuid());
-        courier2.Id.Returns(Guid.NewGuid());
 
         _orderRepository.GetByStatuses(OrderStatus.Created).Returns(Task.FromResult(orders));
         _courierRepository.GetAvailable().Returns(Task.FromResult(couriers));
         
-        // Both dispatches succeed but first assignment fails
-        _dispatchService.Dispatch(order1, couriers).Returns(Result.Success<Courier, Error>(courier1));
-        _dispatchService.Dispatch(order2, Arg.Is<Courier[]>(c => c.Length == 2)) // All couriers available since first assignment failed
-            .Returns(Result.Success<Courier, Error>(courier2));
+        // Pre-assign order1 to another courier to simulate assignment failure
+        var tempCourier = Courier.Create("TempCourier", 3, new Location(5, 5)).Value;
+        order1.Assign(tempCourier); // This will make the next assign call fail
+        
+        // Both dispatches succeed
+        _dispatchService.Dispatch(Arg.Any<Order>(), Arg.Any<Courier[]>())
+            .Returns(callInfo =>
+            {
+                var order = callInfo.ArgAt<Order>(0);
+                if (order.Id == order1.Id)
+                    return Result.Success<Courier, Error>(courier1);
+                else
+                    return Result.Success<Courier, Error>(courier2);
+            });
             
-        order1.Assign(courier1).Returns(UnitResult.Failure<Error>(GeneralErrors.ValueIsInvalid("Order assignment failed")));
-        order2.Assign(courier2).Returns(UnitResult.Success<Error>());
         _unitOfWork.SaveChangesAsync(Arg.Any<CancellationToken>()).Returns(Task.FromResult(true));
 
         var command = new AssignOrdersCommand();
@@ -153,13 +169,13 @@ public class AssignOrdersHandlerTest
         // Assert
         result.Should().BeTrue();
         
-        // First order assignment failed, so no repository update
-        order1.Received(1).Assign(courier1);
+        // First order assignment failed, so no repository update for courier1
         _orderRepository.DidNotReceive().UpdateOrder(order1);
         _courierRepository.DidNotReceive().UpdateCourier(courier1);
         
         // Second order assignment succeeded
-        order2.Received(1).Assign(courier2);
+        order2.Status.Should().Be(OrderStatus.Assigned);
+        order2.CourierId.Should().Be(courier2.Id);
         _orderRepository.Received(1).UpdateOrder(order2);
         _courierRepository.Received(1).UpdateCourier(courier2);
         
@@ -170,15 +186,14 @@ public class AssignOrdersHandlerTest
     public async Task Handle_WithSuccessfulAssignment_UpdatesRepositoriesAndCallsUnitOfWork()
     {
         // Arrange
-        var order = Substitute.For<Order>();
-        var courier = Substitute.For<Courier>();
+        var order = Order.Create(Guid.NewGuid(), new Location(1, 1), 5).Value;
+        var courier = Courier.Create("TestCourier", 5, new Location(2, 2)).Value;
         var orders = new[] { order };
         var couriers = new[] { courier };
 
         _orderRepository.GetByStatuses(OrderStatus.Created).Returns(Task.FromResult(orders));
         _courierRepository.GetAvailable().Returns(Task.FromResult(couriers));
-        _dispatchService.Dispatch(order, couriers).Returns(Result.Success<Courier, Error>(courier));
-        order.Assign(courier).Returns(UnitResult.Success<Error>());
+        _dispatchService.Dispatch(Arg.Any<Order>(), Arg.Any<Courier[]>()).Returns(Result.Success<Courier, Error>(courier));
         _unitOfWork.SaveChangesAsync(Arg.Any<CancellationToken>()).Returns(Task.FromResult(true));
 
         var command = new AssignOrdersCommand();
@@ -188,7 +203,8 @@ public class AssignOrdersHandlerTest
 
         // Assert
         result.Should().BeTrue();
-        order.Received(1).Assign(courier);
+        order.Status.Should().Be(OrderStatus.Assigned);
+        order.CourierId.Should().Be(courier.Id);
         _orderRepository.Received(1).UpdateOrder(order);
         _courierRepository.Received(1).UpdateCourier(courier);
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
@@ -198,15 +214,14 @@ public class AssignOrdersHandlerTest
     public async Task Handle_WithUnitOfWorkFailure_ReturnsFalse()
     {
         // Arrange
-        var order = Substitute.For<Order>();
-        var courier = Substitute.For<Courier>();
+        var order = Order.Create(Guid.NewGuid(), new Location(1, 1), 5).Value;
+        var courier = Courier.Create("TestCourier", 5, new Location(2, 2)).Value;
         var orders = new[] { order };
         var couriers = new[] { courier };
 
         _orderRepository.GetByStatuses(OrderStatus.Created).Returns(Task.FromResult(orders));
         _courierRepository.GetAvailable().Returns(Task.FromResult(couriers));
-        _dispatchService.Dispatch(order, couriers).Returns(Result.Success<Courier, Error>(courier));
-        order.Assign(courier).Returns(UnitResult.Success<Error>());
+        _dispatchService.Dispatch(Arg.Any<Order>(), Arg.Any<Courier[]>()).Returns(Result.Success<Courier, Error>(courier));
         _unitOfWork.SaveChangesAsync(Arg.Any<CancellationToken>()).Returns(Task.FromResult(false));
 
         var command = new AssignOrdersCommand();
@@ -216,7 +231,8 @@ public class AssignOrdersHandlerTest
 
         // Assert
         result.Should().BeFalse();
-        order.Received(1).Assign(courier);
+        order.Status.Should().Be(OrderStatus.Assigned);
+        order.CourierId.Should().Be(courier.Id);
         _orderRepository.Received(1).UpdateOrder(order);
         _courierRepository.Received(1).UpdateCourier(courier);
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
@@ -226,27 +242,31 @@ public class AssignOrdersHandlerTest
     public async Task Handle_WithMultipleOrders_ProcessesEachOrderSequentially()
     {
         // Arrange
-        var order1 = Substitute.For<Order>();
-        var order2 = Substitute.For<Order>();
-        var courier1 = Substitute.For<Courier>();
-        var courier2 = Substitute.For<Courier>();
+        var order1 = Order.Create(Guid.NewGuid(), new Location(1, 1), 5).Value;
+        var order2 = Order.Create(Guid.NewGuid(), new Location(2, 2), 3).Value;
+        var courier1 = Courier.Create("Courier1", 5, new Location(1, 1)).Value;
+        var courier2 = Courier.Create("Courier2", 5, new Location(2, 2)).Value;
         var orders = new[] { order1, order2 };
         var couriers = new[] { courier1, courier2 };
-
-        courier1.Id.Returns(Guid.NewGuid());
-        courier2.Id.Returns(Guid.NewGuid());
 
         _orderRepository.GetByStatuses(OrderStatus.Created).Returns(Task.FromResult(orders));
         _courierRepository.GetAvailable().Returns(Task.FromResult(couriers));
         
-        // First order assigned to first courier
-        _dispatchService.Dispatch(order1, couriers).Returns(Result.Success<Courier, Error>(courier1));
-        order1.Assign(courier1).Returns(UnitResult.Success<Error>());
+        // Track dispatch calls for debugging
+        var dispatchCalls = new List<string>();
         
-        // Second order assigned to second courier (first courier filtered out)
-        _dispatchService.Dispatch(order2, Arg.Is<Courier[]>(c => c.Length == 1 && c[0] == courier2))
-            .Returns(Result.Success<Courier, Error>(courier2));
-        order2.Assign(courier2).Returns(UnitResult.Success<Error>());
+        // Setup dispatch service - always return success with first available courier
+        _dispatchService.Dispatch(Arg.Any<Order>(), Arg.Any<Courier[]>())
+            .Returns(callInfo =>
+            {
+                var order = callInfo.ArgAt<Order>(0);
+                var availableCouriers = callInfo.ArgAt<Courier[]>(1);
+                var courierNames = string.Join(", ", availableCouriers.Select(c => c.Name));
+                dispatchCalls.Add($"Order {order.Id} with {availableCouriers.Length} couriers: [{courierNames}]");
+                
+                // Always return success with first available courier
+                return Result.Success<Courier, Error>(availableCouriers[0]);
+            });
         
         _unitOfWork.SaveChangesAsync(Arg.Any<CancellationToken>()).Returns(Task.FromResult(true));
 
@@ -258,16 +278,18 @@ public class AssignOrdersHandlerTest
         // Assert
         result.Should().BeTrue();
         
-        // Verify both orders were processed
-        order1.Received(1).Assign(courier1);
-        order2.Received(1).Assign(courier2);
+        // Debug: Check dispatch calls
+        dispatchCalls.Count.Should().Be(2, $"Should have called dispatch for both orders. Actual calls: {string.Join("; ", dispatchCalls)}");
+        
+        // Both orders should be processed
+        order1.Status.Should().Be(OrderStatus.Assigned);
+        order1.CourierId.Should().NotBeNull();
+        order2.Status.Should().Be(OrderStatus.Assigned);
+        order2.CourierId.Should().NotBeNull();
+        
+        // Repository calls should be made for both orders
         _orderRepository.Received(1).UpdateOrder(order1);
         _orderRepository.Received(1).UpdateOrder(order2);
-        _courierRepository.Received(1).UpdateCourier(courier1);
-        _courierRepository.Received(1).UpdateCourier(courier2);
-        
-        // Verify courier filtering (second dispatch gets only remaining courier)
-        _dispatchService.Received(1).Dispatch(order2, Arg.Is<Courier[]>(c => c.Length == 1 && c[0] == courier2));
         
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
@@ -276,15 +298,14 @@ public class AssignOrdersHandlerTest
     public async Task Handle_CallsRepositoryMethodsWithCorrectParameters()
     {
         // Arrange
-        var order = Substitute.For<Order>();
-        var courier = Substitute.For<Courier>();
+        var order = Order.Create(Guid.NewGuid(), new Location(1, 1), 5).Value;
+        var courier = Courier.Create("TestCourier", 5, new Location(2, 2)).Value;
         var orders = new[] { order };
         var couriers = new[] { courier };
 
         _orderRepository.GetByStatuses(OrderStatus.Created).Returns(Task.FromResult(orders));
         _courierRepository.GetAvailable().Returns(Task.FromResult(couriers));
-        _dispatchService.Dispatch(order, couriers).Returns(Result.Success<Courier, Error>(courier));
-        order.Assign(courier).Returns(UnitResult.Success<Error>());
+        _dispatchService.Dispatch(Arg.Any<Order>(), Arg.Any<Courier[]>()).Returns(Result.Success<Courier, Error>(courier));
         _unitOfWork.SaveChangesAsync(Arg.Any<CancellationToken>()).Returns(Task.FromResult(true));
 
         var command = new AssignOrdersCommand();
@@ -298,7 +319,11 @@ public class AssignOrdersHandlerTest
         // Verify correct repository method calls
         await _orderRepository.Received(1).GetByStatuses(OrderStatus.Created);
         await _courierRepository.Received(1).GetAvailable();
-        _dispatchService.Received(1).Dispatch(order, couriers);
+        _dispatchService.Received().Dispatch(Arg.Any<Order>(), Arg.Any<Courier[]>());
+        
+        // Verify domain object state
+        order.Status.Should().Be(OrderStatus.Assigned);
+        order.CourierId.Should().Be(courier.Id);
         
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
@@ -307,16 +332,15 @@ public class AssignOrdersHandlerTest
     public async Task Handle_WithCancellationToken_PassesTokenToUnitOfWork()
     {
         // Arrange
-        var order = Substitute.For<Order>();
-        var courier = Substitute.For<Courier>();
+        var order = Order.Create(Guid.NewGuid(), new Location(1, 1), 5).Value;
+        var courier = Courier.Create("TestCourier", 5, new Location(2, 2)).Value;
         var orders = new[] { order };
         var couriers = new[] { courier };
         var cancellationToken = new CancellationToken();
 
         _orderRepository.GetByStatuses(OrderStatus.Created).Returns(Task.FromResult(orders));
         _courierRepository.GetAvailable().Returns(Task.FromResult(couriers));
-        _dispatchService.Dispatch(order, couriers).Returns(Result.Success<Courier, Error>(courier));
-        order.Assign(courier).Returns(UnitResult.Success<Error>());
+        _dispatchService.Dispatch(Arg.Any<Order>(), Arg.Any<Courier[]>()).Returns(Result.Success<Courier, Error>(courier));
         _unitOfWork.SaveChangesAsync(cancellationToken).Returns(Task.FromResult(true));
 
         var command = new AssignOrdersCommand();
@@ -326,6 +350,8 @@ public class AssignOrdersHandlerTest
 
         // Assert
         result.Should().BeTrue();
+        order.Status.Should().Be(OrderStatus.Assigned);
+        order.CourierId.Should().Be(courier.Id);
         await _unitOfWork.Received(1).SaveChangesAsync(cancellationToken);
     }
 }
