@@ -23,10 +23,10 @@ public class DispatchService : IDispatchService
         {
             var canTakeOrderResult = courier.CanTakeOrder(order);
             if (canTakeOrderResult.IsFailure) continue; // Skip courier if it can't take the order        
-            
+
             var timeResult = courier.CalculateTimeToLocation(order.Location);
             if (timeResult.IsFailure) continue; // Skip courier if time calculation fails
-            
+
             if (timeResult.Value < bestTime)
             {
                 bestCourier = courier;
@@ -35,7 +35,7 @@ public class DispatchService : IDispatchService
         }
 
         // Check if we found any eligible courier
-        if (bestCourier == null) 
+        if (bestCourier == null)
             return GeneralErrors.ValueIsInvalid("No courier available with sufficient space");
 
         // Assign the order to the best courier

@@ -28,7 +28,7 @@ public class CourierRepositoryTest : IAsyncDisposable
     private async Task<ApplicationDbContext> CreateDbContextAsync()
     {
         await _container.StartAsync();
-        
+
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
             .UseNpgsql(_container.GetConnectionString())
             .Options;
@@ -36,7 +36,7 @@ public class CourierRepositoryTest : IAsyncDisposable
         var context = new ApplicationDbContext(options);
         await context.Database.EnsureDeletedAsync(); // Clean slate for each test
         await context.Database.EnsureCreatedAsync();
-        
+
         return context;
     }
 
@@ -46,7 +46,7 @@ public class CourierRepositoryTest : IAsyncDisposable
         // Arrange
         using var context = await CreateDbContextAsync();
         var repository = new CourierRepository(context);
-        
+
         var location = new Location(1, 1);
         var courierResult = Courier.Create("Test Courier", 5, location);
         var courier = courierResult.Value;
@@ -59,7 +59,7 @@ public class CourierRepositoryTest : IAsyncDisposable
         var savedCourier = await context.Couriers
             .Include(c => c.StoragePlaces)
             .FirstOrDefaultAsync(c => c.Id == courier.Id);
-        
+
         savedCourier.Should().NotBeNull();
         savedCourier.Name.Should().Be("Test Courier");
         savedCourier.Speed.Should().Be(5);
@@ -75,22 +75,22 @@ public class CourierRepositoryTest : IAsyncDisposable
         // Arrange
         using var context = await CreateDbContextAsync();
         var repository = new CourierRepository(context);
-        
+
         var location = new Location(2, 2);
         var courierResult = Courier.Create("Original Courier", 3, location);
         var courier = courierResult.Value;
-        
+
         await repository.CreateCourier(courier);
         await context.SaveChangesAsync();
-        
+
         // Detach to simulate fresh load
         context.Entry(courier).State = EntityState.Detached;
-        
+
         // Load fresh instance and modify
         var freshCourier = await context.Couriers
             .Include(c => c.StoragePlaces)
             .FirstAsync(c => c.Id == courier.Id);
-        
+
         // Move step by step to reach (5,5) from (2,2)
         freshCourier.Move(new Location(5, 5));
 
@@ -113,11 +113,11 @@ public class CourierRepositoryTest : IAsyncDisposable
         // Arrange
         using var context = await CreateDbContextAsync();
         var repository = new CourierRepository(context);
-        
+
         var location = new Location(3, 3);
         var courierResult = Courier.Create("Get By Id Courier", 4, location);
         var courier = courierResult.Value;
-        
+
         await repository.CreateCourier(courier);
         await context.SaveChangesAsync();
 
@@ -154,26 +154,26 @@ public class CourierRepositoryTest : IAsyncDisposable
         // Arrange
         using var context = await CreateDbContextAsync();
         var repository = new CourierRepository(context);
-        
+
         // Create available courier
         var location1 = new Location(1, 1);
         var availableCourierResult = Courier.Create("Available Courier", 2, location1);
         var availableCourier = availableCourierResult.Value;
-        
+
         // Create unavailable courier with occupied storage
         var location2 = new Location(2, 2);
         var busyCourierResult = Courier.Create("Busy Courier", 3, location2);
         var busyCourier = busyCourierResult.Value;
-        
+
         await repository.CreateCourier(availableCourier);
         await repository.CreateCourier(busyCourier);
         await context.SaveChangesAsync();
-        
+
         // Occupy storage place of busy courier
         var storagePlace = busyCourier.StoragePlaces.First();
         var orderId = Guid.NewGuid();
         storagePlace.Store(orderId, 5);
-        
+
         repository.UpdateCourier(busyCourier);
         await context.SaveChangesAsync();
 
@@ -192,24 +192,24 @@ public class CourierRepositoryTest : IAsyncDisposable
         // Arrange
         using var context = await CreateDbContextAsync();
         var repository = new CourierRepository(context);
-        
+
         var location = new Location(1, 1);
         var courierResult = Courier.Create("Busy Courier", 2, location);
         var courier = courierResult.Value;
-        
+
         await repository.CreateCourier(courier);
         await context.SaveChangesAsync();
-        
+
         // Occupy all storage places
         var courierFromDb = await context.Couriers
             .Include(c => c.StoragePlaces)
             .FirstAsync(c => c.Id == courier.Id);
-        
+
         foreach (var storagePlace in courierFromDb.StoragePlaces)
         {
             storagePlace.Store(Guid.NewGuid(), 5);
         }
-        
+
         await context.SaveChangesAsync();
 
         // Act
@@ -225,25 +225,25 @@ public class CourierRepositoryTest : IAsyncDisposable
         // Arrange
         using var context = await CreateDbContextAsync();
         var repository = new CourierRepository(context);
-        
+
         var location = new Location(1, 1);
         var courierResult = Courier.Create("Multi Storage Courier", 2, location);
         var courier = courierResult.Value;
-        
+
         // Add additional storage place
         courier.AddStoragePlace("Backpack", 20);
-        
+
         await repository.CreateCourier(courier);
         await context.SaveChangesAsync();
-        
+
         // Occupy only one storage place
         var courierFromDb = await context.Couriers
             .Include(c => c.StoragePlaces)
             .FirstAsync(c => c.Id == courier.Id);
-        
+
         var firstStoragePlace = courierFromDb.StoragePlaces.First();
         firstStoragePlace.Store(Guid.NewGuid(), 5);
-        
+
         await context.SaveChangesAsync();
 
         // Act
@@ -259,7 +259,7 @@ public class CourierRepositoryTest : IAsyncDisposable
         {
             await _dbContext.DisposeAsync();
         }
-        
+
         if (_container != null)
         {
             await _container.DisposeAsync();

@@ -29,7 +29,7 @@ public class Courier : Aggregate<Guid>
 
         var defaultStorageResult = StoragePlace.Create("Сумка", 10);
         if (defaultStorageResult.IsFailure) return defaultStorageResult.Error;
-        
+
         return new Courier(name, speed, location, defaultStorageResult.Value);
     }
 
@@ -72,7 +72,7 @@ public class Courier : Aggregate<Guid>
         var storage = StoragePlaces.FirstOrDefault(s => s.OrderId == order.Id);
         if (storage == null) return GeneralErrors.InternalServerError($"Could not find storage for order {order.Id}");
         order.Complete();
-        
+
         return storage.Clear(order.Id);
     }
 
