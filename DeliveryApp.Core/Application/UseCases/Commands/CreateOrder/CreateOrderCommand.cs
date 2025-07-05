@@ -11,5 +11,5 @@ public class CreateOrderCommand : IRequest<bool>
     }
 
     public Guid Id { get; }
-    public string Street { get;  }
+    public string Street { get; }
 }

@@ -26,7 +26,7 @@ public class MoveCouriersHandler : IRequestHandler<MoveCouriersCommand, bool>
         {
             // Get first storage place with an order
             var storageWithOrder = courier.StoragePlaces.FirstOrDefault(s => s.OrderId.HasValue);
-            
+
             if (storageWithOrder != null)
             {
                 // Fetch the specific order by ID
@@ -37,7 +37,7 @@ public class MoveCouriersHandler : IRequestHandler<MoveCouriersCommand, bool>
 
         // Save state in a storage
         await _unitOfWork.SaveChangesAsync(cancellationToken);
-        
+
         return true;
     }
 }

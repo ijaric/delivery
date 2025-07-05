@@ -40,11 +40,11 @@ public class GetCouriersHandlerTest
         // Assert
         result.Should().NotBeNull();
         result.Couriers.Should().HaveCount(2);
-        
+
         result.Couriers[0].Id.Should().Be(courier1.Id);
         result.Couriers[0].Location.X.Should().Be(1);
         result.Couriers[0].Location.Y.Should().Be(2);
-        
+
         result.Couriers[1].Id.Should().Be(courier2.Id);
         result.Couriers[1].Location.X.Should().Be(3);
         result.Couriers[1].Location.Y.Should().Be(4);
@@ -101,7 +101,7 @@ public class GetCouriersHandlerTest
         // Assert
         result.Should().NotBeNull();
         result.Couriers.Should().HaveCount(1);
-        
+
         var mappedCourier = result.Couriers[0];
         mappedCourier.Id.Should().Be(courier.Id);
         mappedCourier.Location.Should().NotBeNull();
@@ -128,16 +128,16 @@ public class GetCouriersHandlerTest
         // Assert
         result.Should().NotBeNull();
         result.Couriers.Should().HaveCount(3);
-        
+
         // Verify each courier is mapped correctly
         result.Couriers[0].Id.Should().Be(courier1.Id);
         result.Couriers[0].Location.X.Should().Be(1);
         result.Couriers[0].Location.Y.Should().Be(2);
-        
+
         result.Couriers[1].Id.Should().Be(courier2.Id);
         result.Couriers[1].Location.X.Should().Be(3);
         result.Couriers[1].Location.Y.Should().Be(4);
-        
+
         result.Couriers[2].Id.Should().Be(courier3.Id);
         result.Couriers[2].Location.X.Should().Be(5);
         result.Couriers[2].Location.Y.Should().Be(6);
@@ -232,4 +232,4 @@ public class GetCouriersHandlerTest
         }
         return courierResult.Value;
     }
-} 
+}

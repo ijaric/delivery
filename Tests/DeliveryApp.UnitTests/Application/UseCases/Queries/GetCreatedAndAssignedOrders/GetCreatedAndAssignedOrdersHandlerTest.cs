@@ -41,11 +41,11 @@ public class GetCreatedAndAssignedOrdersHandlerTest
         // Assert
         result.Should().NotBeNull();
         result.Orders.Should().HaveCount(2);
-        
+
         result.Orders[0].Id.Should().Be(order1.Id);
         result.Orders[0].Location.X.Should().Be(1);
         result.Orders[0].Location.Y.Should().Be(2);
-        
+
         result.Orders[1].Id.Should().Be(order2.Id);
         result.Orders[1].Location.X.Should().Be(3);
         result.Orders[1].Location.Y.Should().Be(4);
@@ -126,7 +126,7 @@ public class GetCreatedAndAssignedOrdersHandlerTest
         // Assert
         result.Should().NotBeNull();
         result.Orders.Should().HaveCount(1);
-        
+
         var mappedOrder = result.Orders[0];
         mappedOrder.Id.Should().Be(orderId);
         mappedOrder.Location.Should().NotBeNull();
@@ -154,16 +154,16 @@ public class GetCreatedAndAssignedOrdersHandlerTest
         // Assert
         result.Should().NotBeNull();
         result.Orders.Should().HaveCount(3);
-        
+
         // Verify each order is mapped correctly
         result.Orders[0].Id.Should().Be(order1.Id);
         result.Orders[0].Location.X.Should().Be(1);
         result.Orders[0].Location.Y.Should().Be(2);
-        
+
         result.Orders[1].Id.Should().Be(order2.Id);
         result.Orders[1].Location.X.Should().Be(3);
         result.Orders[1].Location.Y.Should().Be(4);
-        
+
         result.Orders[2].Id.Should().Be(order3.Id);
         result.Orders[2].Location.X.Should().Be(5);
         result.Orders[2].Location.Y.Should().Be(6);
@@ -273,12 +273,12 @@ public class GetCreatedAndAssignedOrdersHandlerTest
         // Assert
         result.Should().NotBeNull();
         result.Orders.Should().HaveCount(2);
-        
+
         result.Orders[0].Location.X.Should().Be(5);
         result.Orders[0].Location.Y.Should().Be(5);
         result.Orders[1].Location.X.Should().Be(5);
         result.Orders[1].Location.Y.Should().Be(5);
-        
+
         // Verify different instances
         result.Orders[0].Id.Should().NotBe(result.Orders[1].Id);
         result.Orders[0].Location.Should().NotBeSameAs(result.Orders[1].Location);
@@ -289,7 +289,7 @@ public class GetCreatedAndAssignedOrdersHandlerTest
         var result = Order.Create(id, location, volume);
         if (result.IsFailure)
             throw new InvalidOperationException($"Failed to create test order: {result.Error}");
-        
+
         return result.Value;
     }
-} 
+}
