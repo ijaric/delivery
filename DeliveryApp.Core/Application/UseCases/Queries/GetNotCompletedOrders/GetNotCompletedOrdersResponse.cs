@@ -1,26 +1,21 @@
-namespace DeliveryApp.Core.Application.UseCases.Queries.GetCouriers;
+namespace DeliveryApp.Core.Application.UseCases.Queries.GetNotCompletedOrders;
 
-public class GetCouriersResponse
+public class GetNotCompletedOrdersResponse
 {
-    public GetCouriersResponse(List<CourierLocation> couriers)
+    public GetNotCompletedOrdersResponse(List<OrderLocation> orders)
     {
-        Couriers.AddRange(couriers);
+        Orders.AddRange(orders);
     }
 
-    public List<CourierLocation> Couriers { get; set; } = new();
+    public List<OrderLocation> Orders { get; set; } = [];
 }
 
-public class CourierLocation
+public class OrderLocation
 {
     /// <summary>
     ///     Идентификатор
     /// </summary>
     public Guid Id { get; set; }
-
-    /// <summary>
-    ///     Имя
-    /// </summary>
-    public string Name { get; set; }
 
     /// <summary>
     ///     Геопозиция (X,Y)
@@ -39,4 +34,4 @@ public class Location
     ///     Вертикаль
     /// </summary>
     public int Y { get; set; }
-}
+} 

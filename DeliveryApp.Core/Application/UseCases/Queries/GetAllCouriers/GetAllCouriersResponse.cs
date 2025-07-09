@@ -1,21 +1,26 @@
-namespace DeliveryApp.Core.Application.UseCases.Queries.GetCreatedAndAssignedOrders;
+namespace DeliveryApp.Core.Application.UseCases.Queries.GetAllCouriers;
 
-public class GetCreatedAndAssignedOrdersResponse
+public class GetAllCouriersResponse
 {
-    public GetCreatedAndAssignedOrdersResponse(List<OrderLocation> orders)
+    public GetAllCouriersResponse(List<CourierLocation> couriers)
     {
-        Orders.AddRange(orders);
+        Couriers.AddRange(couriers);
     }
 
-    public List<OrderLocation> Orders { get; set; } = [];
+    public List<CourierLocation> Couriers { get; set; } = new();
 }
 
-public class OrderLocation
+public class CourierLocation
 {
     /// <summary>
     ///     Идентификатор
     /// </summary>
     public Guid Id { get; set; }
+
+    /// <summary>
+    ///     Имя
+    /// </summary>
+    public string Name { get; set; }
 
     /// <summary>
     ///     Геопозиция (X,Y)
@@ -34,4 +39,4 @@ public class Location
     ///     Вертикаль
     /// </summary>
     public int Y { get; set; }
-}
+} 

@@ -4,9 +4,10 @@ using DeliveryApp.Api.Adapters.BackgroundJobs;
 using DeliveryApp.Api;
 using DeliveryApp.Core.Application.UseCases.Commands.AssignOrders;
 using DeliveryApp.Core.Application.UseCases.Commands.CreateOrder;
+using DeliveryApp.Core.Application.UseCases.Commands.CreateCourier;
 using DeliveryApp.Core.Application.UseCases.Commands.MoveCouriers;
-using DeliveryApp.Core.Application.UseCases.Queries.GetCouriers;
-using DeliveryApp.Core.Application.UseCases.Queries.GetCreatedAndAssignedOrders;
+using DeliveryApp.Core.Application.UseCases.Queries.GetAllCouriers;
+using DeliveryApp.Core.Application.UseCases.Queries.GetNotCompletedOrders;
 using DeliveryApp.Core.Domain.Services.DispatchService;
 using DeliveryApp.Core.Ports;
 using DeliveryApp.Infrastructure.Adapters.Postgres;
@@ -57,14 +58,19 @@ builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 // Mediator
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
 
-// Commands
-builder.Services.AddScoped<IRequestHandler<CreateOrderCommand, bool>, CreateOrderHandler>();
+// Commands - обновленные с Result<T> pattern
+builder.Services.AddScoped<IRequestHandler<CreateOrderCommand, Result<Unit, Error>>, CreateOrderHandler>();
+builder.Services.AddScoped<IRequestHandler<CreateCourierCommand, Result<Unit, Error>>, CreateCourierHandler>();
 builder.Services.AddScoped<IRequestHandler<MoveCouriersCommand, bool>, MoveCouriersHandler>();
 builder.Services.AddScoped<IRequestHandler<AssignOrdersCommand, bool>, AssignOrdersHandler>();
 
-// Queries
-builder.Services.AddScoped<IRequestHandler<GetCreatedAndAssignedOrdersQuery, GetCreatedAndAssignedOrdersResponse>, GetCreatedAndAssignedOrdersHandler>();
-builder.Services.AddScoped<IRequestHandler<GetCouriersQuery, GetCouriersResponse>, GetCouriersHandler>();
+// Queries - переименованные с семантичными именами
+builder.Services.AddScoped<IRequestHandler<GetNotCompletedOrdersQuery, GetNotCompletedOrdersResponse>, GetNotCompletedOrdersHandler>();
+builder.Services.AddScoped<IRequestHandler<GetAllCouriersQuery, GetAllCouriersResponse>, GetAllCouriersHandler>();
+
+// Controllers
+builder.Services.AddControllers()
+    .AddNewtonsoftJson();
 
 var app = builder.Build();
 
@@ -84,6 +90,11 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     db.Database.Migrate();
 }
+
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapControllers();
+});
 
 // CRON Jobs
 builder.Services.AddQuartz(configure =>

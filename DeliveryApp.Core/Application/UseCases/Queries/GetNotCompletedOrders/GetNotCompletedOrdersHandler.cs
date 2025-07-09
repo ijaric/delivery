@@ -2,22 +2,22 @@ using MediatR;
 using DeliveryApp.Core.Ports;
 using DeliveryApp.Core.Domain.Model.OrderAggregate;
 
-namespace DeliveryApp.Core.Application.UseCases.Queries.GetCreatedAndAssignedOrders;
+namespace DeliveryApp.Core.Application.UseCases.Queries.GetNotCompletedOrders;
 
-public class GetCreatedAndAssignedOrdersHandler : IRequestHandler<GetCreatedAndAssignedOrdersQuery, GetCreatedAndAssignedOrdersResponse>
+public class GetNotCompletedOrdersHandler : IRequestHandler<GetNotCompletedOrdersQuery, GetNotCompletedOrdersResponse>
 {
-
     private readonly IOrderRepository _orderRepository;
 
-    public GetCreatedAndAssignedOrdersHandler(IOrderRepository orderRepository)
+    public GetNotCompletedOrdersHandler(IOrderRepository orderRepository)
     {
-        _orderRepository = orderRepository;
+        _orderRepository = orderRepository ?? throw new ArgumentNullException(nameof(orderRepository));
     }
-    public async Task<GetCreatedAndAssignedOrdersResponse> Handle(GetCreatedAndAssignedOrdersQuery request, CancellationToken cancellationToken)
+
+    public async Task<GetNotCompletedOrdersResponse> Handle(GetNotCompletedOrdersQuery request, CancellationToken cancellationToken)
     {
         var domainOrders = await _orderRepository.GetByStatuses(OrderStatus.Created, OrderStatus.Assigned);
         var dtoOrders = domainOrders.Select(MapToDtoOrder).ToList();
-        return new GetCreatedAndAssignedOrdersResponse(dtoOrders);
+        return new GetNotCompletedOrdersResponse(dtoOrders);
     }
 
     private static OrderLocation MapToDtoOrder(Order domainOrder)
@@ -32,4 +32,4 @@ public class GetCreatedAndAssignedOrdersHandler : IRequestHandler<GetCreatedAndA
             }
         };
     }
-}
+} 
