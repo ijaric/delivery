@@ -1,4 +1,4 @@
-using DeliveryApp.Core.Application.UseCases.Queries.GetCouriers;
+using DeliveryApp.Core.Application.UseCases.Queries.GetAllCouriers;
 using DeliveryApp.Core.Domain.Model.CourierAggregate;
 using DeliveryApp.Core.Ports;
 using FluentAssertions;
@@ -9,17 +9,17 @@ using System.Threading.Tasks;
 using Xunit;
 using DomainLocation = DeliveryApp.Core.Domain.Model.SharedKernel.Location;
 
-namespace DeliveryApp.UnitTests.Application.UseCases.Queries.GetCouriers;
+namespace DeliveryApp.UnitTests.Application.UseCases.Queries.GetAllCouriers;
 
-public class GetCouriersHandlerTest
+public class GetAllCouriersHandlerTest
 {
     private readonly ICourierRepository _courierRepository;
-    private readonly GetCouriersHandler _handler;
+    private readonly GetAllCouriersHandler _handler;
 
-    public GetCouriersHandlerTest()
+    public GetAllCouriersHandlerTest()
     {
         _courierRepository = Substitute.For<ICourierRepository>();
-        _handler = new GetCouriersHandler(_courierRepository);
+        _handler = new GetAllCouriersHandler(_courierRepository);
     }
 
     [Fact]
@@ -32,7 +32,7 @@ public class GetCouriersHandlerTest
 
         _courierRepository.GetBusy().Returns(Task.FromResult(couriers));
 
-        var query = new GetCouriersQuery();
+        var query = new GetAllCouriersQuery();
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
@@ -42,10 +42,12 @@ public class GetCouriersHandlerTest
         result.Couriers.Should().HaveCount(2);
 
         result.Couriers[0].Id.Should().Be(courier1.Id);
+        result.Couriers[0].Name.Should().Be("Courier1"); // ИСПРАВЛЕНО: добавлена проверка Name
         result.Couriers[0].Location.X.Should().Be(1);
         result.Couriers[0].Location.Y.Should().Be(2);
 
         result.Couriers[1].Id.Should().Be(courier2.Id);
+        result.Couriers[1].Name.Should().Be("Courier2"); // ИСПРАВЛЕНО: добавлена проверка Name
         result.Couriers[1].Location.X.Should().Be(3);
         result.Couriers[1].Location.Y.Should().Be(4);
     }
@@ -57,7 +59,7 @@ public class GetCouriersHandlerTest
         var emptyCouriers = new Courier[0];
         _courierRepository.GetBusy().Returns(Task.FromResult(emptyCouriers));
 
-        var query = new GetCouriersQuery();
+        var query = new GetAllCouriersQuery();
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
@@ -74,7 +76,7 @@ public class GetCouriersHandlerTest
         var couriers = new[] { CreateValidCourier("TestCourier", 5, new DomainLocation(1, 1)) };
         _courierRepository.GetBusy().Returns(Task.FromResult(couriers));
 
-        var query = new GetCouriersQuery();
+        var query = new GetAllCouriersQuery();
 
         // Act
         await _handler.Handle(query, CancellationToken.None);
@@ -93,7 +95,7 @@ public class GetCouriersHandlerTest
 
         _courierRepository.GetBusy().Returns(Task.FromResult(couriers));
 
-        var query = new GetCouriersQuery();
+        var query = new GetAllCouriersQuery();
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
@@ -104,6 +106,7 @@ public class GetCouriersHandlerTest
 
         var mappedCourier = result.Couriers[0];
         mappedCourier.Id.Should().Be(courier.Id);
+        mappedCourier.Name.Should().Be("SingleCourier"); // ИСПРАВЛЕНО: добавлена проверка Name
         mappedCourier.Location.Should().NotBeNull();
         mappedCourier.Location.X.Should().Be(expectedLocation.X);
         mappedCourier.Location.Y.Should().Be(expectedLocation.Y);
@@ -120,7 +123,7 @@ public class GetCouriersHandlerTest
 
         _courierRepository.GetBusy().Returns(Task.FromResult(couriers));
 
-        var query = new GetCouriersQuery();
+        var query = new GetAllCouriersQuery();
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
@@ -131,14 +134,17 @@ public class GetCouriersHandlerTest
 
         // Verify each courier is mapped correctly
         result.Couriers[0].Id.Should().Be(courier1.Id);
+        result.Couriers[0].Name.Should().Be("Courier1"); // ИСПРАВЛЕНО: добавлена проверка Name
         result.Couriers[0].Location.X.Should().Be(1);
         result.Couriers[0].Location.Y.Should().Be(2);
 
         result.Couriers[1].Id.Should().Be(courier2.Id);
+        result.Couriers[1].Name.Should().Be("Courier2"); // ИСПРАВЛЕНО: добавлена проверка Name
         result.Couriers[1].Location.X.Should().Be(3);
         result.Couriers[1].Location.Y.Should().Be(4);
 
         result.Couriers[2].Id.Should().Be(courier3.Id);
+        result.Couriers[2].Name.Should().Be("Courier3"); // ИСПРАВЛЕНО: добавлена проверка Name
         result.Couriers[2].Location.X.Should().Be(5);
         result.Couriers[2].Location.Y.Should().Be(6);
     }
@@ -153,7 +159,7 @@ public class GetCouriersHandlerTest
 
         _courierRepository.GetBusy().Returns(Task.FromResult(couriers));
 
-        var query = new GetCouriersQuery();
+        var query = new GetAllCouriersQuery();
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
@@ -171,7 +177,7 @@ public class GetCouriersHandlerTest
         var couriers = new[] { CreateValidCourier("TestCourier", 5, new DomainLocation(1, 1)) };
         _courierRepository.GetBusy().Returns(Task.FromResult(couriers));
 
-        var query = new GetCouriersQuery();
+        var query = new GetAllCouriersQuery();
         var cancellationToken = new CancellationToken();
 
         // Act
@@ -190,7 +196,7 @@ public class GetCouriersHandlerTest
 
         _courierRepository.GetBusy().Returns(Task.FromResult(couriers));
 
-        var query = new GetCouriersQuery();
+        var query = new GetAllCouriersQuery();
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
@@ -200,18 +206,19 @@ public class GetCouriersHandlerTest
         result.Couriers.Should().HaveCount(1);
         result.Couriers[0].Location.X.Should().Be(1);
         result.Couriers[0].Location.Y.Should().Be(10);
+        result.Couriers[0].Name.Should().Be("BoundaryCourier"); // ИСПРАВЛЕНО: добавлена проверка Name
     }
 
     [Fact]
     public async Task Handle_WithMaxCoordinates_MapsCorrectly()
     {
         // Arrange
-        var courier = CreateValidCourier("MaxCourier", 5, new DomainLocation(10, 10));
+        var courier = CreateValidCourier("MaxCourier", 10, new DomainLocation(10, 10));
         var couriers = new[] { courier };
 
         _courierRepository.GetBusy().Returns(Task.FromResult(couriers));
 
-        var query = new GetCouriersQuery();
+        var query = new GetAllCouriersQuery();
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
@@ -221,15 +228,12 @@ public class GetCouriersHandlerTest
         result.Couriers.Should().HaveCount(1);
         result.Couriers[0].Location.X.Should().Be(10);
         result.Couriers[0].Location.Y.Should().Be(10);
+        result.Couriers[0].Name.Should().Be("MaxCourier"); // ИСПРАВЛЕНО: добавлена проверка Name
     }
 
     private static Courier CreateValidCourier(string name, int speed, DomainLocation location)
     {
         var courierResult = Courier.Create(name, speed, location);
-        if (courierResult.IsFailure)
-        {
-            throw new InvalidOperationException($"Failed to create test courier: {courierResult.Error.Message}");
-        }
         return courierResult.Value;
     }
-}
+} 

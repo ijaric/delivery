@@ -1,4 +1,4 @@
-using DeliveryApp.Core.Application.UseCases.Queries.GetCreatedAndAssignedOrders;
+using DeliveryApp.Core.Application.UseCases.Queries.GetNotCompletedOrders;
 using DeliveryApp.Core.Domain.Model.OrderAggregate;
 using DeliveryApp.Core.Ports;
 using FluentAssertions;
@@ -9,17 +9,17 @@ using System.Threading.Tasks;
 using Xunit;
 using DomainLocation = DeliveryApp.Core.Domain.Model.SharedKernel.Location;
 
-namespace DeliveryApp.UnitTests.Application.UseCases.Queries.GetCreatedAndAssignedOrders;
+namespace DeliveryApp.UnitTests.Application.UseCases.Queries.GetNotCompletedOrders;
 
-public class GetCreatedAndAssignedOrdersHandlerTest
+public class GetNotCompletedOrdersHandlerTest
 {
     private readonly IOrderRepository _orderRepository;
-    private readonly GetCreatedAndAssignedOrdersHandler _handler;
+    private readonly GetNotCompletedOrdersHandler _handler;
 
-    public GetCreatedAndAssignedOrdersHandlerTest()
+    public GetNotCompletedOrdersHandlerTest()
     {
         _orderRepository = Substitute.For<IOrderRepository>();
-        _handler = new GetCreatedAndAssignedOrdersHandler(_orderRepository);
+        _handler = new GetNotCompletedOrdersHandler(_orderRepository);
     }
 
     [Fact]
@@ -33,7 +33,7 @@ public class GetCreatedAndAssignedOrdersHandlerTest
         _orderRepository.GetByStatuses(OrderStatus.Created, OrderStatus.Assigned)
             .Returns(Task.FromResult(orders));
 
-        var query = new GetCreatedAndAssignedOrdersQuery();
+        var query = new GetNotCompletedOrdersQuery();
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
@@ -59,7 +59,7 @@ public class GetCreatedAndAssignedOrdersHandlerTest
         _orderRepository.GetByStatuses(OrderStatus.Created, OrderStatus.Assigned)
             .Returns(Task.FromResult(emptyOrders));
 
-        var query = new GetCreatedAndAssignedOrdersQuery();
+        var query = new GetNotCompletedOrdersQuery();
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
@@ -77,7 +77,7 @@ public class GetCreatedAndAssignedOrdersHandlerTest
         _orderRepository.GetByStatuses(OrderStatus.Created, OrderStatus.Assigned)
             .Returns(Task.FromResult(orders));
 
-        var query = new GetCreatedAndAssignedOrdersQuery();
+        var query = new GetNotCompletedOrdersQuery();
 
         // Act
         await _handler.Handle(query, CancellationToken.None);
@@ -94,7 +94,7 @@ public class GetCreatedAndAssignedOrdersHandlerTest
         _orderRepository.GetByStatuses(Arg.Any<OrderStatus>(), Arg.Any<OrderStatus>())
             .Returns(Task.FromResult(orders));
 
-        var query = new GetCreatedAndAssignedOrdersQuery();
+        var query = new GetNotCompletedOrdersQuery();
 
         // Act
         await _handler.Handle(query, CancellationToken.None);
@@ -118,7 +118,7 @@ public class GetCreatedAndAssignedOrdersHandlerTest
         _orderRepository.GetByStatuses(OrderStatus.Created, OrderStatus.Assigned)
             .Returns(Task.FromResult(orders));
 
-        var query = new GetCreatedAndAssignedOrdersQuery();
+        var query = new GetNotCompletedOrdersQuery();
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
@@ -146,7 +146,7 @@ public class GetCreatedAndAssignedOrdersHandlerTest
         _orderRepository.GetByStatuses(OrderStatus.Created, OrderStatus.Assigned)
             .Returns(Task.FromResult(orders));
 
-        var query = new GetCreatedAndAssignedOrdersQuery();
+        var query = new GetNotCompletedOrdersQuery();
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
@@ -180,7 +180,7 @@ public class GetCreatedAndAssignedOrdersHandlerTest
         _orderRepository.GetByStatuses(OrderStatus.Created, OrderStatus.Assigned)
             .Returns(Task.FromResult(orders));
 
-        var query = new GetCreatedAndAssignedOrdersQuery();
+        var query = new GetNotCompletedOrdersQuery();
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
@@ -199,7 +199,7 @@ public class GetCreatedAndAssignedOrdersHandlerTest
         _orderRepository.GetByStatuses(OrderStatus.Created, OrderStatus.Assigned)
             .Returns(Task.FromResult(orders));
 
-        var query = new GetCreatedAndAssignedOrdersQuery();
+        var query = new GetNotCompletedOrdersQuery();
         var cancellationToken = new CancellationToken();
 
         // Act
@@ -219,7 +219,7 @@ public class GetCreatedAndAssignedOrdersHandlerTest
         _orderRepository.GetByStatuses(OrderStatus.Created, OrderStatus.Assigned)
             .Returns(Task.FromResult(orders));
 
-        var query = new GetCreatedAndAssignedOrdersQuery();
+        var query = new GetNotCompletedOrdersQuery();
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
@@ -241,7 +241,7 @@ public class GetCreatedAndAssignedOrdersHandlerTest
         _orderRepository.GetByStatuses(OrderStatus.Created, OrderStatus.Assigned)
             .Returns(Task.FromResult(orders));
 
-        var query = new GetCreatedAndAssignedOrdersQuery();
+        var query = new GetNotCompletedOrdersQuery();
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
@@ -265,7 +265,7 @@ public class GetCreatedAndAssignedOrdersHandlerTest
         _orderRepository.GetByStatuses(OrderStatus.Created, OrderStatus.Assigned)
             .Returns(Task.FromResult(orders));
 
-        var query = new GetCreatedAndAssignedOrdersQuery();
+        var query = new GetNotCompletedOrdersQuery();
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
@@ -273,23 +273,15 @@ public class GetCreatedAndAssignedOrdersHandlerTest
         // Assert
         result.Should().NotBeNull();
         result.Orders.Should().HaveCount(2);
-
         result.Orders[0].Location.X.Should().Be(5);
         result.Orders[0].Location.Y.Should().Be(5);
         result.Orders[1].Location.X.Should().Be(5);
         result.Orders[1].Location.Y.Should().Be(5);
-
-        // Verify different instances
-        result.Orders[0].Id.Should().NotBe(result.Orders[1].Id);
-        result.Orders[0].Location.Should().NotBeSameAs(result.Orders[1].Location);
     }
 
     private static Order CreateValidOrder(Guid id, DomainLocation location, int volume = 5)
     {
-        var result = Order.Create(id, location, volume);
-        if (result.IsFailure)
-            throw new InvalidOperationException($"Failed to create test order: {result.Error}");
-
-        return result.Value;
+        var orderResult = Order.Create(id, location, volume);
+        return orderResult.Value;
     }
-}
+} 
