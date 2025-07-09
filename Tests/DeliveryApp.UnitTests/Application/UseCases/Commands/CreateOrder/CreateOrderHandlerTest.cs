@@ -171,7 +171,7 @@ public class CreateOrderCommandTest
     [Theory]
     [InlineData(0)]
     [InlineData(-1)]
-    [InlineData(11)]
+    [InlineData(-5)]
     public void Create_WithInvalidVolume_ReturnsFailure(int volume)
     {
         // Act
@@ -179,12 +179,12 @@ public class CreateOrderCommandTest
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.Error.Message.Should().Contain("Volume must be between 1 and 10");
+        result.Error.Message.Should().Contain("Volume must be greater than 0");
     }
 
     [Theory]
     [InlineData(0, 0, 0)]
-    [InlineData(11, 11, 11)]
+    [InlineData(11, 11, -1)]
     [InlineData(-1, -1, -1)]
     public void Create_WithMultipleInvalidParameters_ReturnsFailureWithAllErrors(int x, int y, int volume)
     {
@@ -195,6 +195,6 @@ public class CreateOrderCommandTest
         result.IsFailure.Should().BeTrue();
         result.Error.Message.Should().Contain("X coordinate must be between 1 and 10");
         result.Error.Message.Should().Contain("Y coordinate must be between 1 and 10");
-        result.Error.Message.Should().Contain("Volume must be between 1 and 10");
+        result.Error.Message.Should().Contain("Volume must be greater than 0");
     }
 } 

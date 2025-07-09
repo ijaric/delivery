@@ -156,31 +156,6 @@ public class CreateCourierCommandTest
         result.Error.Message.Should().Contain("name");
     }
 
-    [Fact]
-    public void Create_WithNameTooShort_ReturnsFailure()
-    {
-        // Act
-        var result = CreateCourierCommand.Create("A", 5);
-
-        // Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Message.Should().Contain("at least 2 characters");
-    }
-
-    [Fact]
-    public void Create_WithNameTooLong_ReturnsFailure()
-    {
-        // Arrange
-        var longName = new string('A', 51);
-
-        // Act
-        var result = CreateCourierCommand.Create(longName, 5);
-
-        // Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Message.Should().Contain("no more than 50 characters");
-    }
-
     [Theory]
     [InlineData(0)]
     [InlineData(-1)]
@@ -194,17 +169,5 @@ public class CreateCourierCommandTest
         result.IsFailure.Should().BeTrue();
         result.Error.Message.Should().Contain("speed");
         result.Error.Message.Should().Contain("greater than 0");
-    }
-
-    [Fact]
-    public void Create_WithSpeedTooHigh_ReturnsFailure()
-    {
-        // Act
-        var result = CreateCourierCommand.Create("ValidName", 11);
-
-        // Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Message.Should().Contain("speed");
-        result.Error.Message.Should().Contain("no more than 10");
     }
 } 

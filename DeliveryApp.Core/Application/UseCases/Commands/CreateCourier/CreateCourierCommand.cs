@@ -22,15 +22,9 @@ public class CreateCourierCommand : IRequest<Result<Unit, Error>>
         
         if (string.IsNullOrWhiteSpace(name))
             errors.Add("Courier name is required");
-        else if (name.Length < 2)
-            errors.Add("Courier name must be at least 2 characters long");
-        else if (name.Length > 50)
-            errors.Add("Courier name must be no more than 50 characters long");
 
         if (speed <= 0)
             errors.Add("Courier speed must be greater than 0");
-        else if (speed > 10)
-            errors.Add("Courier speed must be no more than 10");
 
         if (errors.Count > 0)
             return GeneralErrors.ValueIsInvalid(string.Join(", ", errors));

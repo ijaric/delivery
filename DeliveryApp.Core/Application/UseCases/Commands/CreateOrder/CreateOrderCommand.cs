@@ -28,8 +28,8 @@ public class CreateOrderCommand : IRequest<Result<Unit, Error>>
         if (y < 1 || y > 10)
             errors.Add("Y coordinate must be between 1 and 10");
             
-        if (volume < 1 || volume > 10)
-            errors.Add("Volume must be between 1 and 10");
+        if (volume < 1)
+            errors.Add("Volume must be greater than 0");
 
         if (errors.Count > 0)
             return GeneralErrors.ValueIsInvalid(string.Join(", ", errors));
