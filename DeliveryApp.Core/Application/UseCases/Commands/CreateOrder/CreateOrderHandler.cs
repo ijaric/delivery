@@ -3,9 +3,11 @@ using DeliveryApp.Core.Ports;
 using MediatR;
 using Primitives;
 using DeliveryApp.Core.Domain.Model.SharedKernel;
+using CSharpFunctionalExtensions;
+
 namespace DeliveryApp.Core.Application.UseCases.Commands.CreateOrder;
 
-public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, bool>
+public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Unit, Error>>
 {
     private readonly IOrderRepository _orderRepository;
     private readonly IUnitOfWork _unitOfWork;
@@ -16,16 +18,22 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, bool>
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
     }
 
-    public async Task<bool> Handle(CreateOrderCommand message, CancellationToken cancellationToken)
+    public async Task<Result<Unit, Error>> Handle(CreateOrderCommand command, CancellationToken cancellationToken)
     {
-        // TODO: Shall we receive order volume from the command?
-        // Create order
-        var orderCreateResult = Order.Create(message.Id, Location.CreateRandom(), 1);
-        if (orderCreateResult.IsFailure) return false;
+        // Create order with specified volume
+        var orderCreateResult = Order.Create(command.Id, Location.CreateRandom(), command.Volume);
+        if (orderCreateResult.IsFailure) 
+            return orderCreateResult.Error;
+        
         var order = orderCreateResult.Value;
 
         // Save order in a storage
         await _orderRepository.CreateOrder(order);
-        return await _unitOfWork.SaveChangesAsync(cancellationToken);
+        
+        var saveResult = await _unitOfWork.SaveChangesAsync(cancellationToken);
+        if (!saveResult)
+            return GeneralErrors.InternalServerError("Failed to save order to database");
+        
+        return Unit.Value;
     }
 }
