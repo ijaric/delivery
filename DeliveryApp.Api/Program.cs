@@ -1,5 +1,6 @@
 using System.Reflection;
 using CSharpFunctionalExtensions;
+using DeliveryApp.Api.Adapters.BackgroundJobs;
 using DeliveryApp.Api;
 using DeliveryApp.Core.Application.UseCases.Commands.AssignOrders;
 using DeliveryApp.Core.Application.UseCases.Commands.CreateOrder;
@@ -13,6 +14,7 @@ using DeliveryApp.Infrastructure.Adapters.Postgres.Repositories;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Primitives;
+using Quartz;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -82,5 +84,26 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     db.Database.Migrate();
 }
+
+// CRON Jobs
+builder.Services.AddQuartz(configure =>
+{
+    var assignOrdersJobKey = new JobKey(nameof(AssignOrdersJob));
+    var moveCouriersJobKey = new JobKey(nameof(MoveCouriersJob));
+    configure
+        .AddJob<AssignOrdersJob>(assignOrdersJobKey)
+        .AddTrigger(
+            trigger => trigger.ForJob(assignOrdersJobKey)
+                .WithSimpleSchedule(
+                    schedule => schedule.WithIntervalInSeconds(1)
+                        .RepeatForever()))
+        .AddJob<MoveCouriersJob>(moveCouriersJobKey)
+        .AddTrigger(
+            trigger => trigger.ForJob(moveCouriersJobKey)
+                .WithSimpleSchedule(
+                    schedule => schedule.WithIntervalInSeconds(2)
+                        .RepeatForever()));
+});
+builder.Services.AddQuartzHostedService();
 
 app.Run();
