@@ -20,8 +20,9 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Uni
 
     public async Task<Result<Unit, Error>> Handle(CreateOrderCommand command, CancellationToken cancellationToken)
     {
-        // Create order with specified volume
-        var orderCreateResult = Order.Create(command.Id, Location.CreateRandom(), command.Volume);
+        // Create order with specified coordinates and volume
+        var location = new Location(command.X, command.Y);
+        var orderCreateResult = Order.Create(Guid.NewGuid(), location, command.Volume);
         if (orderCreateResult.IsFailure) 
             return orderCreateResult.Error;
         
