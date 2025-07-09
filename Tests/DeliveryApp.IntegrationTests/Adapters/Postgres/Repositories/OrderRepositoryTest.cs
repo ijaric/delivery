@@ -27,7 +27,7 @@ public class OrderRepositoryTest : IAsyncDisposable
     private async Task<ApplicationDbContext> CreateDbContextAsync()
     {
         await _container.StartAsync();
-        
+
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
             .UseNpgsql(_container.GetConnectionString())
             .Options;
@@ -35,7 +35,7 @@ public class OrderRepositoryTest : IAsyncDisposable
         var context = new ApplicationDbContext(options);
         await context.Database.EnsureDeletedAsync(); // Clean slate for each test
         await context.Database.EnsureCreatedAsync();
-        
+
         return context;
     }
 
@@ -45,7 +45,7 @@ public class OrderRepositoryTest : IAsyncDisposable
         // Arrange
         using var context = await CreateDbContextAsync();
         var repository = new OrderRepository(context);
-        
+
         var orderId = Guid.NewGuid();
         var location = new Location(5, 7);
         var orderResult = Order.Create(orderId, location, 25);
@@ -57,7 +57,7 @@ public class OrderRepositoryTest : IAsyncDisposable
 
         // Assert
         var savedOrder = await context.Orders.FirstOrDefaultAsync(o => o.Id == orderId);
-        
+
         savedOrder.Should().NotBeNull();
         savedOrder.Id.Should().Be(orderId);
         savedOrder.Location.X.Should().Be(5);
@@ -73,26 +73,26 @@ public class OrderRepositoryTest : IAsyncDisposable
         // Arrange
         using var context = await CreateDbContextAsync();
         var repository = new OrderRepository(context);
-        
+
         var orderId = Guid.NewGuid();
         var location = new Location(3, 4);
         var orderResult = Order.Create(orderId, location, 15);
         var order = orderResult.Value;
-        
+
         await repository.CreateOrder(order);
         await context.SaveChangesAsync();
-        
+
         // Create and assign a courier
         var courierLocation = new Location(1, 1);
         var courierResult = Courier.Create("Test Courier", 2, courierLocation);
         var courier = courierResult.Value;
-        
+
         await context.Couriers.AddAsync(courier);
         await context.SaveChangesAsync();
-        
+
         // Detach to simulate fresh load
         context.Entry(order).State = EntityState.Detached;
-        
+
         // Load fresh instance and assign courier
         var freshOrder = await context.Orders.FirstAsync(o => o.Id == orderId);
         freshOrder.Assign(courier);
@@ -113,12 +113,12 @@ public class OrderRepositoryTest : IAsyncDisposable
         // Arrange
         using var context = await CreateDbContextAsync();
         var repository = new OrderRepository(context);
-        
+
         var orderId = Guid.NewGuid();
         var location = new Location(2, 3);
         var orderResult = Order.Create(orderId, location, 30);
         var order = orderResult.Value;
-        
+
         await repository.CreateOrder(order);
         await context.SaveChangesAsync();
 
@@ -155,26 +155,26 @@ public class OrderRepositoryTest : IAsyncDisposable
         // Arrange
         using var context = await CreateDbContextAsync();
         var repository = new OrderRepository(context);
-        
+
         // Create multiple orders with different statuses
         var location1 = new Location(1, 1);
         var order1Result = Order.Create(Guid.NewGuid(), location1, 10);
         var order1 = order1Result.Value;
-        
+
         var location2 = new Location(2, 2);
         var order2Result = Order.Create(Guid.NewGuid(), location2, 20);
         var order2 = order2Result.Value;
-        
+
         var location3 = new Location(3, 3);
         var order3Result = Order.Create(Guid.NewGuid(), location3, 30);
         var order3 = order3Result.Value;
-        
+
         // Assign order2 to change its status
         var courierLocation = new Location(1, 1);
         var courierResult = Courier.Create("Test Courier", 2, courierLocation);
         var courier = courierResult.Value;
         order2.Assign(courier);
-        
+
         await repository.CreateOrder(order1);
         await repository.CreateOrder(order2);
         await repository.CreateOrder(order3);
@@ -198,17 +198,17 @@ public class OrderRepositoryTest : IAsyncDisposable
         // Arrange
         using var context = await CreateDbContextAsync();
         var repository = new OrderRepository(context);
-        
+
         var location = new Location(1, 1);
         var orderResult = Order.Create(Guid.NewGuid(), location, 10);
         var order = orderResult.Value;
-        
+
         // Create courier and assign order
         var courierLocation = new Location(1, 1);
         var courierResult = Courier.Create("Test Courier", 2, courierLocation);
         var courier = courierResult.Value;
         order.Assign(courier);
-        
+
         await repository.CreateOrder(order);
         await context.Couriers.AddAsync(courier);
         await context.SaveChangesAsync();
@@ -224,26 +224,26 @@ public class OrderRepositoryTest : IAsyncDisposable
         // Arrange
         using var context = await CreateDbContextAsync();
         var repository = new OrderRepository(context);
-        
+
         // Create orders with different statuses
         var location1 = new Location(1, 1);
         var createdOrder1Result = Order.Create(Guid.NewGuid(), location1, 10);
         var createdOrder1 = createdOrder1Result.Value;
-        
+
         var location2 = new Location(2, 2);
         var createdOrder2Result = Order.Create(Guid.NewGuid(), location2, 20);
         var createdOrder2 = createdOrder2Result.Value;
-        
+
         var location3 = new Location(3, 3);
         var assignedOrderResult = Order.Create(Guid.NewGuid(), location3, 30);
         var assignedOrder = assignedOrderResult.Value;
-        
+
         // Create courier and assign one order
         var courierLocation = new Location(1, 1);
         var courierResult = Courier.Create("Test Courier", 2, courierLocation);
         var courier = courierResult.Value;
         assignedOrder.Assign(courier);
-        
+
         await repository.CreateOrder(createdOrder1);
         await repository.CreateOrder(createdOrder2);
         await repository.CreateOrder(assignedOrder);
@@ -252,7 +252,7 @@ public class OrderRepositoryTest : IAsyncDisposable
 
         // Act - Get created orders
         var createdOrders = await repository.GetByStatus(OrderStatus.Created);
-        
+
         // Assert
         createdOrders.Should().HaveCount(2);
         createdOrders.Should().AllSatisfy(o => o.Status.Should().Be(OrderStatus.Created));
@@ -263,7 +263,7 @@ public class OrderRepositoryTest : IAsyncDisposable
 
         // Act - Get assigned orders
         var assignedOrders = await repository.GetByStatus(OrderStatus.Assigned);
-        
+
         // Assert
         assignedOrders.Should().HaveCount(1);
         assignedOrders[0].Id.Should().Be(assignedOrder.Id);
@@ -276,11 +276,11 @@ public class OrderRepositoryTest : IAsyncDisposable
         // Arrange
         using var context = await CreateDbContextAsync();
         var repository = new OrderRepository(context);
-        
+
         var location = new Location(1, 1);
         var orderResult = Order.Create(Guid.NewGuid(), location, 10);
         var order = orderResult.Value;
-        
+
         await repository.CreateOrder(order);
         await context.SaveChangesAsync();
 
@@ -297,26 +297,26 @@ public class OrderRepositoryTest : IAsyncDisposable
         // Arrange
         using var context = await CreateDbContextAsync();
         var repository = new OrderRepository(context);
-        
+
         // Create multiple orders
         var orders = new List<Order>();
-                 for (int i = 0; i < 5; i++)
-         {
-             var location = new Location(i + 1, i + 1); // Ensure coordinates are 1-10
-             var orderResult = Order.Create(Guid.NewGuid(), location, 10 + i);
+        for (int i = 0; i < 5; i++)
+        {
+            var location = new Location(i + 1, i + 1); // Ensure coordinates are 1-10
+            var orderResult = Order.Create(Guid.NewGuid(), location, 10 + i);
             orders.Add(orderResult.Value);
             await repository.CreateOrder(orderResult.Value);
         }
-        
+
         // Create courier and assign 3 orders
         var courierLocation = new Location(1, 1);
         var courierResult = Courier.Create("Test Courier", 2, courierLocation);
         var courier = courierResult.Value;
-        
+
         orders[1].Assign(courier);
         orders[3].Assign(courier);
         orders[4].Assign(courier);
-        
+
         await context.Couriers.AddAsync(courier);
         await context.SaveChangesAsync();
 
@@ -327,7 +327,7 @@ public class OrderRepositoryTest : IAsyncDisposable
         assignedOrders.Should().HaveCount(3);
         assignedOrders.Should().AllSatisfy(o => o.Status.Should().Be(OrderStatus.Assigned));
         assignedOrders.Should().AllSatisfy(o => o.CourierId.Should().Be(courier.Id));
-        
+
         var assignedOrderIds = assignedOrders.Select(o => o.Id).ToArray();
         assignedOrderIds.Should().Contain(orders[1].Id);
         assignedOrderIds.Should().Contain(orders[3].Id);

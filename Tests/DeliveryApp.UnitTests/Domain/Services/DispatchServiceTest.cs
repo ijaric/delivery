@@ -64,7 +64,7 @@ public class DispatchServiceTest
         // Arrange
         var order = CreateValidOrder();
         var courier = CreateValidCourier("Courier1", 5, new Location(1, 1));
-        
+
         // First assign the order to change its status
         order.Assign(courier);
         var couriers = new[] { courier };
@@ -117,11 +117,11 @@ public class DispatchServiceTest
         // Arrange
         var orderLocation = new Location(5, 5);
         var order = CreateOrderAtLocation(orderLocation);
-        
+
         var slowCourier = CreateValidCourier("SlowCourier", 1, new Location(1, 1)); // Distance: 8, Time: 8
         var fastCourier = CreateValidCourier("FastCourier", 10, new Location(3, 3)); // Distance: 4, Time: 0.4
         var mediumCourier = CreateValidCourier("MediumCourier", 2, new Location(2, 2)); // Distance: 6, Time: 3
-        
+
         var couriers = new[] { slowCourier, fastCourier, mediumCourier };
 
         // Act
@@ -138,10 +138,10 @@ public class DispatchServiceTest
         // Arrange
         var orderLocation = new Location(3, 3);
         var order = CreateOrderAtLocation(orderLocation);
-        
+
         var courier1 = CreateValidCourier("Courier1", 2, new Location(1, 1)); // Distance: 4, Time: 2
         var courier2 = CreateValidCourier("Courier2", 2, new Location(5, 5)); // Distance: 4, Time: 2
-        
+
         var couriers = new[] { courier1, courier2 };
 
         // Act
@@ -158,11 +158,11 @@ public class DispatchServiceTest
         // Arrange
         var orderLocation = new Location(5, 5);
         var order = CreateOrderWithVolumeAtLocation(15, orderLocation); // Large volume
-        
+
         var courierNoSpace = CreateValidCourier("NoSpace", 10, new Location(1, 1)); // Fast but no space (default 10)
         var courierWithSpace = CreateValidCourier("WithSpace", 5, new Location(2, 2)); // Slower but has space
         courierWithSpace.AddStoragePlace("Big Bag", 20); // Add larger storage
-        
+
         var couriers = new[] { courierNoSpace, courierWithSpace };
 
         // Act
@@ -178,15 +178,15 @@ public class DispatchServiceTest
     {
         // Arrange
         var order = CreateValidOrder();
-        
+
         var ineligibleCourier = CreateValidCourier("Ineligible", 5, new Location(1, 1));
         var eligibleCourier = CreateValidCourier("Eligible", 3, new Location(2, 2));
         eligibleCourier.AddStoragePlace("Extra Storage", 10);
-        
+
         // Make first courier ineligible by filling its storage
         var dummyOrder = CreateValidOrder();
         ineligibleCourier.TakeOrder(dummyOrder);
-        
+
         var couriers = new[] { ineligibleCourier, eligibleCourier };
 
         // Act
@@ -212,7 +212,7 @@ public class DispatchServiceTest
         Assert.True(result.IsSuccess);
         Assert.Equal(OrderStatus.Assigned, order.Status);
         Assert.Equal(courier.Id, order.CourierId);
-        
+
         // Verify courier has taken the order (storage should be occupied)
         var canTakeAnotherOrder = courier.CanTakeOrder(CreateValidOrder());
         Assert.True(canTakeAnotherOrder.IsFailure); // Should fail because storage is occupied

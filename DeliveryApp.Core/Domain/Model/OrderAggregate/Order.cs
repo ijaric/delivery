@@ -6,7 +6,7 @@ using Primitives;
 namespace DeliveryApp.Core.Domain.Model.OrderAggregate;
 
 public class Order : Aggregate<Guid>
-{    
+{
     public Location Location { get; }
     public int Volume { get; }
     public OrderStatus Status { get; private set; }

@@ -8,15 +8,16 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Dapper" Version="2.1.66"/>
-        <PackageReference Include="Newtonsoft.Json" Version="13.0.3"/>
-        <PackageReference Include="Npgsql" Version="9.0.3"/>
-        <PackageReference Include="System.Reflection" Version="4.3.0"/>
-        <PackageReference Include="CSharpFunctionalExtensions" Version="3.6.0"/>
+        <PackageReference Include="Dapper" Version="2.1.66" />
+        <PackageReference Include="MediatR" Version="13.0.0" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+        <PackageReference Include="Npgsql" Version="9.0.3" />
+        <PackageReference Include="System.Reflection" Version="4.3.0" />
+        <PackageReference Include="CSharpFunctionalExtensions" Version="3.6.0" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Utils\Primitives\Primitives.csproj"/>
+        <ProjectReference Include="..\Utils\Primitives\Primitives.csproj" />
     </ItemGroup>
 
 </Project>

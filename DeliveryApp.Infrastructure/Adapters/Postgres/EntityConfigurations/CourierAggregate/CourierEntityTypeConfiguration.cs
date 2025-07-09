@@ -22,7 +22,7 @@ internal class CourierEntityTypeConfiguration : IEntityTypeConfiguration<Courier
             .Property(entity => entity.Name)
             .HasColumnName("name")
             .IsRequired();
-        
+
         entityTypeBuilder
             .Property(entity => entity.Speed)
             .HasColumnName("speed")

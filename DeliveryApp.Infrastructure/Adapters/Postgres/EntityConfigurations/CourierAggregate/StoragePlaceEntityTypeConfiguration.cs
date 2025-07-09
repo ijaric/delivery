@@ -27,12 +27,12 @@ internal class StoragePlaceEntityTypeConfiguration : IEntityTypeConfiguration<St
             .Property(entity => entity.TotalVolume)
             .HasColumnName("total_volume")
             .IsRequired();
-        
+
         entityTypeBuilder
             .Property(entity => entity.OrderId)
             .HasColumnName("order_id")
             .IsRequired(false);
-        
+
         entityTypeBuilder
             .Property("CourierId")
             .HasColumnName("courier_id")

@@ -14,5 +14,7 @@ public interface IOrderRepository
 
     public Task<Order> GetAnyCreated();
 
-    public Task<Order[]> GetByStatus(OrderStatus status);    
+    public Task<Order[]> GetByStatus(OrderStatus status);
+
+    public Task<Order[]> GetByStatuses(params OrderStatus[] statuses);
 }

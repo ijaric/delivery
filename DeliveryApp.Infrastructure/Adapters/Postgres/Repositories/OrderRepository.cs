@@ -37,4 +37,12 @@ public class OrderRepository : IOrderRepository
     {
         return await _dbContext.Orders.Where(o => o.Status.Name == status.Name).ToArrayAsync();
     }
+
+    public async Task<Order[]> GetByStatuses(params OrderStatus[] statuses)
+    {
+        var statusNames = statuses.Select(s => s.Name).ToArray();
+        return await _dbContext.Orders
+            .Where(o => statusNames.Contains(o.Status.Name))
+            .ToArrayAsync();
+    }
 }

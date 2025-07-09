@@ -32,4 +32,10 @@ public class CourierRepository : ICourierRepository
     {
         return await _dbContext.Couriers.Where(c => c.StoragePlaces.All(s => s.OrderId == null)).ToArrayAsync();
     }
+
+    public async Task<Courier[]> GetBusy()
+    {
+        return await _dbContext.Couriers.Where(c => c.StoragePlaces.Any(s => s.OrderId != null)).ToArrayAsync();
+    }
+
 }
