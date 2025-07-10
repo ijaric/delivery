@@ -25,17 +25,32 @@ public class CourierRepository : ICourierRepository
 
     public async Task<Courier> GetById(Guid id)
     {
-        return await _dbContext.Couriers.FindAsync(id);
+        return await _dbContext.Couriers
+            .Include(c => c.StoragePlaces)
+            .FirstOrDefaultAsync(c => c.Id == id);
+    }
+
+    public async Task<Courier[]> GetAll()
+    {
+        return await _dbContext.Couriers
+            .Include(c => c.StoragePlaces)
+            .ToArrayAsync();
     }
 
     public async Task<Courier[]> GetAvailable()
     {
-        return await _dbContext.Couriers.Where(c => c.StoragePlaces.All(s => s.OrderId == null)).ToArrayAsync();
+        return await _dbContext.Couriers
+            .Include(c => c.StoragePlaces)
+            .Where(c => c.StoragePlaces.All(s => s.OrderId == null))
+            .ToArrayAsync();
     }
 
     public async Task<Courier[]> GetBusy()
     {
-        return await _dbContext.Couriers.Where(c => c.StoragePlaces.Any(s => s.OrderId != null)).ToArrayAsync();
+        return await _dbContext.Couriers
+            .Include(c => c.StoragePlaces)
+            .Where(c => c.StoragePlaces.Any(s => s.OrderId != null))
+            .ToArrayAsync();
     }
 
 }

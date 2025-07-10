@@ -12,6 +12,8 @@ public interface ICourierRepository
 
     public Task<Courier> GetById(Guid id);
 
+    public Task<Courier[]> GetAll();
+
     public Task<Courier[]> GetAvailable();
 
     public Task<Courier[]> GetBusy();
