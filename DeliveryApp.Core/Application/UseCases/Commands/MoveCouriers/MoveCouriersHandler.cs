@@ -31,7 +31,24 @@ public class MoveCouriersHandler : IRequestHandler<MoveCouriersCommand, bool>
             {
                 // Fetch the specific order by ID
                 var order = await _orderRepository.GetById(storageWithOrder.OrderId.Value);
-                courier.Move(order.Location);
+                
+                // Check if courier has reached the destination
+                if (courier.Location.Equals(order.Location))
+                {
+                    // Complete the order
+                    var completeResult = courier.CompleteOrder(order);
+                    if (completeResult.IsSuccess)
+                    {
+                        _orderRepository.UpdateOrder(order);
+                        _courierRepository.UpdateCourier(courier);
+                    }
+                }
+                else
+                {
+                    // Move courier towards the order location
+                    courier.Move(order.Location);
+                    _courierRepository.UpdateCourier(courier);
+                }
             }
         }
 
