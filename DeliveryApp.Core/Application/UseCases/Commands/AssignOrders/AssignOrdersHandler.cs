@@ -43,16 +43,8 @@ public class AssignOrdersHandler : IRequestHandler<AssignOrdersCommand, bool>
             
             if (dispatchResult.IsSuccess)
             {
-                // Order was assigned successfully by dispatch service
+                // Order was assigned successfully by dispatch service (TakeOrder already called order.Assign)
                 var assignedCourier = dispatchResult.Value;
-                
-                // Now assign the order in the domain model
-                var assignResult = order.Assign(assignedCourier);
-                if (assignResult.IsFailure)
-                {
-                    // If order assignment fails, skip this order and continue
-                    continue;
-                }
                 
                 // Update repositories
                 _orderRepository.UpdateOrder(order);
