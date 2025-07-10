@@ -14,6 +14,10 @@ using DeliveryApp.Infrastructure.Adapters.Postgres;
 using DeliveryApp.Infrastructure.Adapters.Postgres.Repositories;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
+using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Serialization;
+using OpenApi.Filters;
 using Primitives;
 using Quartz;
 
@@ -68,35 +72,40 @@ builder.Services.AddScoped<IRequestHandler<AssignOrdersCommand, bool>, AssignOrd
 builder.Services.AddScoped<IRequestHandler<GetNotCompletedOrdersQuery, GetNotCompletedOrdersResponse>, GetNotCompletedOrdersHandler>();
 builder.Services.AddScoped<IRequestHandler<GetAllCouriersQuery, GetAllCouriersResponse>, GetAllCouriersHandler>();
 
-// Controllers
-builder.Services.AddControllers()
-    .AddNewtonsoftJson();
-
-var app = builder.Build();
-
-// -----------------------------------
-// Configure the HTTP request pipeline
-if (app.Environment.IsDevelopment())
-    app.UseDeveloperExceptionPage();
-else
-    app.UseHsts();
-
-app.UseHealthChecks("/health");
-app.UseRouting();
-
-// Apply Migrations
-using (var scope = app.Services.CreateScope())
+// Swagger
+builder.Services.AddSwaggerGen(options =>
 {
-    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    db.Database.Migrate();
-}
-
-app.UseEndpoints(endpoints =>
-{
-    endpoints.MapControllers();
+    options.SwaggerDoc("1.0.0", new OpenApiInfo
+    {
+        Title = "Delivery Service",
+        Description = "Отвечает за учет курьеров, деспетчеризацию доставок, доставку",
+        Contact = new OpenApiContact
+        {
+            Name = "Kirill Vetchinkin",
+            Url = new Uri("https://microarch.ru"),
+            Email = "info@microarch.ru"
+        }
+    });
+    options.CustomSchemaIds(type => type.FullName);
+    options.IncludeXmlComments(
+        $"{AppContext.BaseDirectory}{Path.DirectorySeparatorChar}{Assembly.GetEntryAssembly()?.GetName().Name}.xml");
+    options.DocumentFilter<BasePathFilter>("");
+    options.OperationFilter<GeneratePathParamsValidationFilter>();
 });
+builder.Services.AddSwaggerGenNewtonsoftSupport();
 
-// CRON Jobs
+// Controllers - Enhanced JSON configuration
+builder.Services.AddControllers()
+    .AddNewtonsoftJson(options =>
+    {
+        options.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
+        options.SerializerSettings.Converters.Add(new StringEnumConverter
+        {
+            NamingStrategy = new CamelCaseNamingStrategy()
+        });
+    });
+
+// CRON Jobs - Enhanced with DI integration
 builder.Services.AddQuartz(configure =>
 {
     var assignOrdersJobKey = new JobKey(nameof(AssignOrdersJob));
@@ -114,7 +123,40 @@ builder.Services.AddQuartz(configure =>
                 .WithSimpleSchedule(
                     schedule => schedule.WithIntervalInSeconds(2)
                         .RepeatForever()));
+    // Note: UseMicrosoftDependencyInjectionJobFactory is now the default
 });
 builder.Services.AddQuartzHostedService();
+
+var app = builder.Build();
+
+// -----------------------------------
+// Configure the HTTP request pipeline
+if (app.Environment.IsDevelopment())
+    app.UseDeveloperExceptionPage();
+else
+    app.UseHsts();
+
+app.UseHealthChecks("/health");
+app.UseRouting();
+
+app.UseDefaultFiles();
+app.UseStaticFiles();
+app.UseSwagger(c => { c.RouteTemplate = "openapi/{documentName}/openapi.json"; })
+    .UseSwaggerUI(options =>
+    {
+        options.RoutePrefix = string.Empty;
+        options.SwaggerEndpoint("/openapi/1.0.0/openapi.json", "Swagger Delivery Service");
+    });
+
+app.UseCors();
+
+// Apply Migrations - Proper order: before endpoints
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    db.Database.Migrate();
+}
+
+app.MapControllers();
 
 app.Run();

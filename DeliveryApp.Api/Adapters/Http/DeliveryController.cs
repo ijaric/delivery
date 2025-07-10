@@ -56,6 +56,7 @@ public class DeliveryController : DefaultApiController
     /// </summary>
     public override async Task<IActionResult> CreateOrder()
     {
+        // ❌ CURRENT IMPLEMENTATION: No parameters, generates random order
         var random = new Random();
         var x = random.Next(1, 11); // Случайная координата X от 1 до 10
         var y = random.Next(1, 11); // Случайная координата Y от 1 до 10
@@ -74,7 +75,15 @@ public class DeliveryController : DefaultApiController
         var response = await _mediator.Send(commandResult.Value);
         if (response.IsSuccess)
         {
+            // ❌ CURRENT: Returns simple object, missing order ID
             return Created($"/api/v1/orders", new { success = true });
+            
+            // ✅ TO MATCH OPENAPI SPEC: Should return CreateOrderResponse with actual order ID
+            // return Created($"/api/v1/orders", new CreateOrderResponse 
+            // { 
+            //     Id = response.Value.Id,  // Actual order ID
+            //     Success = true 
+            // });
         }
 
         return Conflict(new Error 
@@ -83,6 +92,13 @@ public class DeliveryController : DefaultApiController
             Message = response.Error.Message 
         });
     }
+    
+    // ✅ TO MATCH OPENAPI SPEC: Method signature should be:
+    // public override async Task<IActionResult> CreateOrder([FromBody] CreateOrderRequest request)
+    // {
+    //     var commandResult = CreateOrderCommand.Create(request.Street, request.Id);
+    //     // ... rest of implementation
+    // }
 
     /// <summary>
     /// Получить всех курьеров

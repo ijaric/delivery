@@ -15,7 +15,7 @@ public class GetAllCouriersHandler : IRequestHandler<GetAllCouriersQuery, GetAll
 
     public async Task<GetAllCouriersResponse> Handle(GetAllCouriersQuery request, CancellationToken cancellationToken)
     {
-        var domainCouriers = await _courierRepository.GetBusy();
+        var domainCouriers = await _courierRepository.GetAll();
         var dtoCouriers = domainCouriers.Select(MapToDtoCourier).ToList();
         return new GetAllCouriersResponse(dtoCouriers);
     }
